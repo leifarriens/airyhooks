@@ -1,8 +1,8 @@
 {
-  "name": "@airhooks/hooks",
+  "name": "@airyhooks/hooks",
   "version": "0.1.0",
   "private": true,
-  "description": "React hooks source files for airhooks CLI",
+  "description": "React hooks source files for airyhooks CLI",
   "type": "module",
   "scripts": {
     "build:templates": "tsx scripts/generate-templates.ts",
@@ -12,8 +12,8 @@
     "lint": "eslint ."
   },
   "devDependencies": {
-    "@airhooks/eslint-config": "workspace:*",
-    "@airhooks/tsconfig": "workspace:*",
+    "@airyhooks/eslint-config": "workspace:*",
+    "@airyhooks/tsconfig": "workspace:*",
     "@testing-library/react": "^16.0.0",
     "@types/react": "^19.0.0",
     "@vitest/coverage-v8": "^4.0.17",

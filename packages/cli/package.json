@@ -1,10 +1,10 @@
 {
-  "name": "airhooks",
-  "version": "0.1.0",
+  "name": "airyhooks",
+  "version": "0.1.0-beta.0",
   "description": "CLI to add React hooks to your project",
   "type": "module",
   "bin": {
-    "airhooks": "./dist/index.js"
+    "airyhooks": "./dist/index.js"
   },
   "files": [
     "dist"
@@ -13,7 +13,8 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "prepublishOnly": "pnpm build"
   },
   "dependencies": {
     "commander": "^12.1.0",
@@ -22,8 +23,8 @@
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@airhooks/eslint-config": "workspace:*",
-    "@airhooks/tsconfig": "workspace:*",
+    "@airyhooks/eslint-config": "workspace:*",
+    "@airyhooks/tsconfig": "workspace:*",
     "@types/fs-extra": "^11.0.4",
     "@types/prompts": "^2.4.9",
     "eslint": "^9.38.0",

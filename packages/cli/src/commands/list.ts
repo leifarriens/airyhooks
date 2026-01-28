@@ -10,5 +10,5 @@ export function list() {
     console.log(pc.dim(`    ${hook.description}\n`));
   }
 
-  console.log(pc.dim("Usage: airhooks add <hook-name>\n"));
+  console.log(pc.dim("Usage: airyhooks add <hook-name>\n"));
 }

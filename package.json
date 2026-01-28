@@ -1,13 +1,12 @@
 {
-  "name": "@airhooks/monorepo",
+  "name": "@airyhooks/monorepo",
   "version": "0.1.0",
   "description": "No Frameworks included Typescript Monorepo Template with Linter, Tests & CI",
   "type": "module",
   "scripts": {
     "dev": "turbo dev",
-    "format": "prettier . --write",
-    "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
-    "lint:fix": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "format": "prettier . --write --cache --cache-location .cache/.prettiercache",
+    "lint": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "postinstall": "manypkg check",
     "test": "turbo test",
     "typecheck": "turbo typecheck --continue",

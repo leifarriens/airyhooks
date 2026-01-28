@@ -1,5 +1,5 @@
 {
-  "extends": "@airhooks/tsconfig/lib.json",
+  "extends": "@airyhooks/tsconfig/lib.json",
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",

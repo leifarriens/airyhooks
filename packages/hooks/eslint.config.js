@@ -1,4 +1,4 @@
-import baseConfig from "@airhooks/eslint-config";
+import baseConfig from "@airyhooks/eslint-config";
 
 export default [
   ...baseConfig,

@@ -17,7 +17,7 @@ This document provides guidance for AI coding agents working in this TypeScript 
 After making changes, **always run verification** to ensure your implementation is correct:
 
 ```bash
-pnpm lint && pnpm typecheck && pnpm test
+pnpm format && pnpm lint && pnpm typecheck && pnpm test
 ```
 
 If any command fails, fix the issues before considering the task complete.
@@ -33,9 +33,10 @@ This monorepo uses **pnpm**. Always use `pnpm` commands.
 Run commands from the repository root to verify all packages. Non-changed packages are cached with turbo for faster execution:
 
 ```bash
+pnpm format
+pnpm typecheck
 pnpm lint
 pnpm test
-pnpm typecheck
 ```
 
 ### Specific Package

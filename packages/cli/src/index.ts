@@ -8,13 +8,13 @@ import { list } from "./commands/list.js";
 const program = new Command();
 
 program
-  .name("airhooks")
+  .name("airyhooks")
   .description("Add React hooks to your project")
   .version("0.1.0");
 
 program
   .command("init")
-  .description("Initialize airhooks configuration")
+  .description("Initialize airyhooks configuration")
   .action(init);
 
 program

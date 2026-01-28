@@ -53,4 +53,28 @@ export const registry: HookDefinition[] = [
     description: "Track window dimensions",
     name: "useWindowSize",
   },
+  {
+    description: "Manage numeric state with increment/decrement/reset/set",
+    name: "useCounter",
+  },
+  {
+    description: "Sync state with sessionStorage",
+    name: "useSessionStorage",
+  },
+  {
+    description: "Track mouse hover state on elements",
+    name: "useHover",
+  },
+  {
+    description: "Detect specific keyboard key presses",
+    name: "useKeyPress",
+  },
+  {
+    description: "React to CSS media query changes",
+    name: "useMedia",
+  },
+  {
+    description: "Track scroll position of element or window",
+    name: "useScroll",
+  },
 ];

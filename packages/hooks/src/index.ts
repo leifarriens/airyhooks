@@ -1,9 +1,15 @@
 export { useClickAway } from "./useClickAway/index.js";
+export { useCounter } from "./useCounter/index.js";
 export { useDebounce } from "./useDebounce/index.js";
+export { useHover } from "./useHover/index.js";
 export { useInterval, useTimeout } from "./useInterval/index.js";
+export { useKeyPress } from "./useKeyPress/index.js";
 export { useLocalStorage } from "./useLocalStorage/index.js";
+export { useMedia } from "./useMedia/index.js";
 export { useMount, useUnmount } from "./useMount/index.js";
 export { usePrevious } from "./usePrevious/index.js";
+export { useScroll, useScrollElement } from "./useScroll/index.js";
+export { useSessionStorage } from "./useSessionStorage/index.js";
 export { useThrottle } from "./useThrottle/index.js";
 export { useBoolean, useToggle } from "./useToggle/index.js";
 export { useWindowSize } from "./useWindowSize/index.js";

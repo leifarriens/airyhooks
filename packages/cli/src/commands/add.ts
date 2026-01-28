@@ -13,7 +13,7 @@ export async function add(hookName: string) {
 
   if (!hook) {
     console.log(pc.red(`✗ Hook "${hookName}" not found.`));
-    console.log(pc.dim("Run `airhooks list` to see available hooks."));
+    console.log(pc.dim("Run `airyhooks list` to see available hooks."));
     process.exit(1);
   }
 

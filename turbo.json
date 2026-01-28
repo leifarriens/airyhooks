@@ -14,8 +14,8 @@
       "outputs": ["../cli/src/utils/get-hook-template.ts"],
       "inputs": ["src/**/use*.ts", "scripts/generate-templates.ts"]
     },
-    "airhooks#build": {
-      "dependsOn": ["^build", "@airhooks/hooks#build:templates"],
+    "airyhooks#build": {
+      "dependsOn": ["^build", "@airyhooks/hooks#build:templates"],
       "outputs": ["dist/**"]
     },
     "dev": {

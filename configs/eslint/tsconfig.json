@@ -1,5 +1,5 @@
 {
-  "extends": "@airhooks/tsconfig/base.json",
+  "extends": "@airyhooks/tsconfig/base.json",
   "include": ["."],
   "exclude": ["node_modules"]
 }

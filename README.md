@@ -1,9 +1,9 @@
-# airhooks
+# airyhooks
 
 A zero-dependency, TypeScript-first React hooks library. Add battle-tested hooks directly to your project with a simple CLI command.
 
 ```bash
-pnpm dlx airhooks@latest add useDebounce
+pnpm dlx airyhooks@latest add useDebounce
 ```
 
 ## ✨ Features
@@ -42,16 +42,16 @@ pnpm install
 
 ### Add a Hook to Your Project
 
-First, initialize airhooks in your project:
+First, initialize airyhooks in your project:
 
 ```bash
-pnpm dlx airhooks@latest init
+pnpm dlx airyhooks@latest init
 ```
 
 Then add any hook:
 
 ```bash
-pnpm dlx airhooks@latest add useDebounce
+pnpm dlx airyhooks@latest add useDebounce
 ```
 
 This creates the following structure in your project:
@@ -84,7 +84,7 @@ export function SearchComponent() {
 ### View Available Hooks
 
 ```bash
-pnpm dlx airhooks@latest list
+pnpm dlx airyhooks@latest list
 ```
 
 ## 🧪 Testing
@@ -94,7 +94,7 @@ pnpm dlx airhooks@latest list
 Create a global link to test the CLI locally:
 
 ```bash
-# In the airhooks directory
+# In the airyhooks directory
 pnpm install
 pnpm turbo build
 
@@ -106,9 +106,9 @@ pnpm link --global
 Then in any project:
 
 ```bash
-airhooks init
-airhooks list
-airhooks add useDebounce
+airyhooks init
+airyhooks list
+airyhooks add useDebounce
 ```
 
 Unlink when done:
@@ -120,7 +120,7 @@ pnpm unlink --global
 ### Option 2: Run CLI Directly
 
 ```bash
-cd /home/leif/airhooks/packages/cli
+cd /home/leif/airyhooks/packages/cli
 pnpm build
 node dist/index.js init
 node dist/index.js list
@@ -131,20 +131,20 @@ node dist/index.js add useDebounce
 
 ```bash
 # Create a test directory
-cd /tmp && mkdir test-airhooks-project && cd test-airhooks-project
+cd /tmp && mkdir test-airyhooks-project && cd test-airyhooks-project
 
 # Install and initialize
 pnpm install
 mkdir hooks
 
 # Copy a hook from the repository manually or use linked CLI
-cp -r /path/to/airhooks/packages/hooks/src/useDebounce hooks/
+cp -r /path/to/airyhooks/packages/hooks/src/useDebounce hooks/
 ```
 
 ## 🏗️ Project Structure
 
 ```
-airhooks/
+airyhooks/
 ├── packages/
 │   ├── hooks/              # Hook implementations
 │   │   ├── src/            # Individual hooks with tests
@@ -175,8 +175,8 @@ pnpm typecheck              # TypeScript check
 pnpm test                   # Vitest with coverage
 
 # For specific package
-pnpm --filter @airhooks/hooks test
-pnpm --filter airhooks lint
+pnpm --filter @airyhooks/hooks test
+pnpm --filter airyhooks lint
 ```
 
 ### Test Coverage
@@ -215,7 +215,7 @@ touch packages/hooks/src/useMyHook/index.ts
 6. Regenerate templates:
 
 ```bash
-pnpm --filter @airhooks/hooks build:templates
+pnpm --filter @airyhooks/hooks build:templates
 ```
 
 7. Verify:
@@ -229,7 +229,7 @@ pnpm lint && pnpm typecheck && pnpm test
 Hook templates are automatically generated from source files. After adding or modifying hooks, run:
 
 ```bash
-pnpm --filter @airhooks/hooks build:templates
+pnpm --filter @airyhooks/hooks build:templates
 ```
 
 This ensures the CLI always has the latest hook implementations.
@@ -259,7 +259,7 @@ export function App() {
 
 ## 📦 How It Works
 
-1. **CLI**: `airhooks add useDebounce` reads the template from the registry
+1. **CLI**: `airyhooks add useDebounce` reads the template from the registry
 2. **Template Generation**: Automatically generated from `packages/hooks/src/useDebounce/useDebounce.ts`
 3. **File Creation**: Hook and barrel export are written to your project
 4. **Usage**: Import directly from your local hooks directory
@@ -287,4 +287,4 @@ Contributions welcome! Please ensure:
 
 ---
 
-**Ready to use?** Run `pnpm dlx airhooks@latest init` to get started!
+**Ready to use?** Run `pnpm dlx airyhooks@latest init` to get started!
