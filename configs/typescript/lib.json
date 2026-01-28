@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "./base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "composite": true,
+    "sourceMap": true,
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declarationMap": true,
+    "outDir": "${configDir}/dist"
+  }
+}

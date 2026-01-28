@@ -1,0 +1,10 @@
+{
+  "extends": "@airhooks/tsconfig/lib.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "rootDir": "src",
+    "resolveJsonModule": true,
+    "emitDeclarationOnly": false
+  },
+  "include": ["src"]
+}

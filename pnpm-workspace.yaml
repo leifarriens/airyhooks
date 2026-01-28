@@ -1,0 +1,8 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+  - "configs/**"
+  - "!**/test/**"
+
+onlyBuiltDependencies:
+  - esbuild

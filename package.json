@@ -1,0 +1,25 @@
+{
+  "name": "@airhooks/monorepo",
+  "version": "0.1.0",
+  "description": "No Frameworks included Typescript Monorepo Template with Linter, Tests & CI",
+  "type": "module",
+  "scripts": {
+    "dev": "turbo dev",
+    "format": "prettier . --write",
+    "lint": "turbo run lint --continue -- --cache --cache-location .cache/.eslintcache",
+    "lint:fix": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
+    "postinstall": "manypkg check",
+    "test": "turbo test",
+    "typecheck": "turbo typecheck --continue",
+    "turbo": "turbo"
+  },
+  "author": "Leif Arriens",
+  "license": "MIT",
+  "devDependencies": {
+    "@manypkg/cli": "^0.25.1",
+    "@types/node": "^24.0.0",
+    "prettier": "^3.8.0",
+    "turbo": "^2.7.4"
+  },
+  "packageManager": "pnpm@10.28.2"
+}

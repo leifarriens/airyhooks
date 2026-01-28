@@ -1,0 +1,46 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": [".cache/tsbuildinfo.json", "dist/**", "build/**"]
+    },
+    "build:templates": {
+      "dependsOn": ["^build:templates"],
+      "outputs": ["../cli/src/utils/get-hook-template.ts"],
+      "inputs": ["src/**/use*.ts", "scripts/generate-templates.ts"]
+    },
+    "airhooks#build": {
+      "dependsOn": ["^build", "@airhooks/hooks#build:templates"],
+      "outputs": ["dist/**"]
+    },
+    "dev": {
+      "dependsOn": ["^dev"],
+      "cache": false,
+      "persistent": true
+    },
+    "typecheck": {
+      "dependsOn": ["^topo", "^build"],
+      "outputs": [".cache/tsbuildinfo.json"]
+    },
+    "lint": {
+      "dependsOn": ["^topo", "^build"],
+      "outputs": [".cache/.eslintcache"]
+    },
+    "test": {
+      "dependsOn": ["^topo", "^build"]
+    },
+    "test:watch": {
+      "dependsOn": ["^topo", "^build"],
+      "interactive": true,
+      "persistent": true,
+      "cache": false
+    }
+  },
+  "globalDependencies": ["**/.env"],
+  "globalPassThroughEnv": ["NODE_ENV", "CI"]
+}

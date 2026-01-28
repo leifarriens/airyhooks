@@ -1,0 +1,38 @@
+{
+  "name": "airhooks",
+  "version": "0.1.0",
+  "description": "CLI to add React hooks to your project",
+  "type": "module",
+  "bin": {
+    "airhooks": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "fs-extra": "^11.2.0",
+    "picocolors": "^1.1.1",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@airhooks/eslint-config": "workspace:*",
+    "@airhooks/tsconfig": "workspace:*",
+    "@types/fs-extra": "^11.0.4",
+    "@types/prompts": "^2.4.9",
+    "eslint": "^9.38.0",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "react",
+    "hooks",
+    "cli"
+  ],
+  "license": "MIT"
+}
