@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "turbo dev",
+    "build": "turbo build",
     "format": "prettier . --write --cache --cache-location .cache/.prettiercache",
     "lint": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "postinstall": "manypkg check",

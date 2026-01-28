@@ -1,144 +1,75 @@
 # airyhooks
 
-A zero-dependency, TypeScript-first React hooks library. Add battle-tested hooks directly to your project with a simple CLI command.
+A zero-dependency, TypeScript-first React hooks library delivered via CLI.
 
-```bash
-pnpm dlx airyhooks@latest add useDebounce
-```
+> **For end-user documentation**, see the [CLI package README](packages/cli/README.md) or [npm package page](https://www.npmjs.com/package/airyhooks).
 
-## ✨ Features
+This repository is a monorepo containing:
 
-- **12 Production-Ready Hooks** — Common React patterns you'll reach for immediately
-- **Zero Dependencies** — Hooks only depend on React
-- **TypeScript First** — Full type safety with comprehensive generics
-- **Copy, Don't Install** — Add hooks directly to your codebase for maximum control
-- **Well-Tested** — 50+ tests with 94%+ coverage, edge cases included
-- **Fully Documented** — JSDoc comments and usage examples for every hook
+- `packages/hooks` — Hook implementations with comprehensive tests
+- `packages/cli` — CLI tool for adding hooks to projects
+- `configs` — Shared ESLint and TypeScript configurations
 
-## 📚 Available Hooks
-
-| Hook              | Purpose                                         |
-| ----------------- | ----------------------------------------------- |
-| `useDebounce`     | Delay value updates by N milliseconds           |
-| `useThrottle`     | Limit updates to max once per interval          |
-| `useLocalStorage` | Sync state with localStorage, cross-tab support |
-| `usePrevious`     | Track the previous value of any variable        |
-| `useToggle`       | Boolean state with toggle function              |
-| `useBoolean`      | Enhanced boolean state with typed handlers      |
-| `useMount`        | Run side effects on component mount             |
-| `useUnmount`      | Run side effects on component unmount           |
-| `useInterval`     | Manage intervals with pause support             |
-| `useTimeout`      | Manage timeouts with cancellation               |
-| `useClickAway`    | Detect clicks outside an element                |
-| `useWindowSize`   | Track window dimensions                         |
-
-## 🚀 Quick Start
+## 🚀 Getting Started
 
 ### Installation
 
+Install dependencies:
+
 ```bash
 pnpm install
 ```
 
-### Add a Hook to Your Project
-
-First, initialize airyhooks in your project:
+### Build All Packages
 
 ```bash
-pnpm dlx airyhooks@latest init
-```
-
-Then add any hook:
-
-```bash
-pnpm dlx airyhooks@latest add useDebounce
-```
-
-This creates the following structure in your project:
-
-```
-hooks/
-├── useDebounce/
-│   ├── useDebounce.ts
-│   └── index.ts
-```
-
-Import and use:
-
-```tsx
-import { useDebounce } from "./hooks/useDebounce";
-
-export function SearchComponent() {
-  const [value, setValue] = useState("");
-  const debouncedValue = useDebounce(value, 500);
-
-  return (
-    <div>
-      <input value={value} onChange={(e) => setValue(e.target.value)} />
-      <p>Searching for: {debouncedValue}</p>
-    </div>
-  );
-}
-```
-
-### View Available Hooks
-
-```bash
-pnpm dlx airyhooks@latest list
-```
-
-## 🧪 Testing
-
-### Option 1: Build & Link (Recommended for Development)
-
-Create a global link to test the CLI locally:
-
-```bash
-# In the airyhooks directory
-pnpm install
 pnpm turbo build
+```
 
-# Create global link
+## 🧪 Development & Testing
+
+### Running Tests
+
+Run all tests across packages:
+
+```bash
+pnpm test
+```
+
+Run tests with coverage:
+
+```bash
+cd packages/hooks
+pnpm test -- --coverage
+```
+
+### Testing the CLI Locally
+
+#### Option 1: Global Link (Recommended)
+
+```bash
+# Build and create global link
+pnpm turbo build
 cd packages/cli
 pnpm link --global
-```
 
-Then in any project:
-
-```bash
+# Test in any project
 airyhooks init
 airyhooks list
 airyhooks add useDebounce
-```
 
-Unlink when done:
-
-```bash
+# Unlink when done
 pnpm unlink --global
 ```
 
-### Option 2: Run CLI Directly
+#### Option 2: Run Directly
 
 ```bash
-cd /home/leif/airyhooks/packages/cli
+cd packages/cli
 pnpm build
 node dist/index.js init
 node dist/index.js list
 node dist/index.js add useDebounce
-```
-
-### Option 3: Test in Fresh Project
-
-```bash
-# Create a test directory
-cd /tmp && mkdir test-airyhooks-project && cd test-airyhooks-project
-
-# Install and initialize
-pnpm install
-mkdir hooks
-
-# Copy a hook from the repository manually or use linked CLI
-cp -r /path/to/airyhooks/packages/hooks/src/useDebounce hooks/
 ```
 
 ## 🏗️ Project Structure
@@ -234,30 +165,7 @@ pnpm --filter @airyhooks/hooks build:templates
 
 This ensures the CLI always has the latest hook implementations.
 
-## 📝 Example: useDebounce
-
-```tsx
-import { useState } from "react";
-import { useDebounce } from "./hooks/useDebounce";
-
-export function App() {
-  const [input, setInput] = useState("");
-  const debouncedInput = useDebounce(input, 1000);
-
-  return (
-    <div>
-      <input
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        placeholder="Type something..."
-      />
-      <p>You typed: {debouncedInput}</p>
-    </div>
-  );
-}
-```
-
-## 📦 How It Works
+## How It Works
 
 1. **CLI**: `airyhooks add useDebounce` reads the template from the registry
 2. **Template Generation**: Automatically generated from `packages/hooks/src/useDebounce/useDebounce.ts`
@@ -280,11 +188,17 @@ MIT
 
 Contributions welcome! Please ensure:
 
-1. Tests pass: `pnpm test`
+1. All tests pass: `pnpm test`
 2. Types check: `pnpm typecheck`
 3. Code lints: `pnpm lint`
-4. Coverage maintained: `pnpm test -- --coverage`
+4. Test coverage maintained (currently 94%+)
+5. Update CLI registry when adding new hooks
+6. Regenerate templates: `pnpm --filter @airyhooks/hooks build:templates`
 
----
+### Release Process
 
-**Ready to use?** Run `pnpm dlx airyhooks@latest init` to get started!
+```bash
+# Bump version in packages/cli/package.json
+cd packages/cli
+npm publish --access public
+```

@@ -133,15 +133,13 @@ export function useClickAway<T extends HTMLElement>(
  *   </>
  * );
  */
-export function useCounter(
-  initialValue = 0,
-): [
+export function useCounter(initialValue = 0): [
   number,
   {
-    increment: (amount?: number) => void;
     decrement: (amount?: number) => void;
+    increment: (amount?: number) => void;
     reset: () => void;
-    set: (value: number | ((prev: number) => number)) => void;
+    set: (value: ((prev: number) => number) | number) => void;
   },
 ] {
   const [count, setCount] = useState<number>(initialValue);
@@ -158,15 +156,15 @@ export function useCounter(
     setCount(initialValue);
   }, [initialValue]);
 
-  const set = useCallback((value: number | ((prev: number) => number)) => {
+  const set = useCallback((value: ((prev: number) => number) | number) => {
     setCount(value);
   }, []);
 
   return [
     count,
     {
-      increment,
       decrement,
+      increment,
       reset,
       set,
     },
@@ -247,7 +245,7 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
 
   // Attach event listeners to the ref
   const setRef = useCallback(
-    (element: T | null) => {
+    (element: null | T) => {
       if (ref.current) {
         ref.current.removeEventListener("mouseenter", handleMouseEnter);
         ref.current.removeEventListener("mouseleave", handleMouseLeave);
@@ -258,7 +256,7 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
         element.addEventListener("mouseleave", handleMouseLeave);
       }
 
-      (ref as React.MutableRefObject<T | null>).current = element;
+      ref.current = element;
     },
     [handleMouseEnter, handleMouseLeave],
   );
@@ -267,11 +265,10 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
   return [
     isHovered,
     {
-      current: ref.current,
       get current() {
         return ref.current;
       },
-      set current(element: T | null) {
+      set current(element: null | T) {
         setRef(element);
       },
     } as React.RefObject<T>,
@@ -486,7 +483,7 @@ export function useMedia(query: string): boolean {
   useEffect(() => {
     // Check if window is defined (SSR safety)
     if (typeof window === "undefined") {
-      return;
+      return undefined;
     }
 
     try {
@@ -501,21 +498,13 @@ export function useMedia(query: string): boolean {
       };
 
       // Modern browsers use addEventListener
-      if (mediaQueryList.addEventListener) {
-        mediaQueryList.addEventListener("change", handleChange);
-        return () => {
-          mediaQueryList.removeEventListener("change", handleChange);
-        };
-      } else {
-        // Fallback for older browsers
-        mediaQueryList.addListener(handleChange);
-        return () => {
-          mediaQueryList.removeListener(handleChange);
-        };
-      }
+      mediaQueryList.addEventListener("change", handleChange);
+      return () => {
+        mediaQueryList.removeEventListener("change", handleChange);
+      };
     } catch (error) {
       console.warn(\`Invalid media query: "\${query}"\`, error);
-      return;
+      return undefined;
     }
   }, [query]);
 
@@ -616,10 +605,9 @@ interface ScrollPosition {
  * return <div ref={ref}>Content</div>;
  */
 export function useScroll(
-  ref?: React.RefObject<HTMLElement>,
+  ref?: React.RefObject<HTMLElement | null>,
 ): ScrollPosition {
   const [scroll, setScroll] = useState<ScrollPosition>({ x: 0, y: 0 });
-  const internalRef = useRef<HTMLElement | null>(null);
 
   const handleScroll = useCallback(() => {
     if (ref?.current) {
@@ -672,16 +660,15 @@ export function useScroll(
  *     style={{ height: "200px", overflow: "auto" }}
  *   >
  *     <p>Scroll position: X: {scroll.x}, Y: {scroll.y}</p>
- *     {/* long content */}
  *   </div>
  * );
  */
 export function useScrollElement<T extends HTMLElement = HTMLElement>(): [
-  React.RefObject<T>,
+  React.RefObject<null | T>,
   ScrollPosition,
 ] {
   const ref = useRef<T>(null);
-  const scroll = useScroll(ref);
+  const scroll = useScroll(ref as React.RefObject<HTMLElement | null>);
 
   return [ref, scroll];
 }
@@ -710,10 +697,9 @@ interface ScrollPosition {
  * return <div ref={ref}>Content</div>;
  */
 export function useScroll(
-  ref?: React.RefObject<HTMLElement>,
+  ref?: React.RefObject<HTMLElement | null>,
 ): ScrollPosition {
   const [scroll, setScroll] = useState<ScrollPosition>({ x: 0, y: 0 });
-  const internalRef = useRef<HTMLElement | null>(null);
 
   const handleScroll = useCallback(() => {
     if (ref?.current) {
@@ -766,16 +752,15 @@ export function useScroll(
  *     style={{ height: "200px", overflow: "auto" }}
  *   >
  *     <p>Scroll position: X: {scroll.x}, Y: {scroll.y}</p>
- *     {/* long content */}
  *   </div>
  * );
  */
 export function useScrollElement<T extends HTMLElement = HTMLElement>(): [
-  React.RefObject<T>,
+  React.RefObject<null | T>,
   ScrollPosition,
 ] {
   const ref = useRef<T>(null);
-  const scroll = useScroll(ref);
+  const scroll = useScroll(ref as React.RefObject<HTMLElement | null>);
 
   return [ref, scroll];
 }

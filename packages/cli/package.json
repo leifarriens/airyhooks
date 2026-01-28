@@ -1,13 +1,14 @@
 {
   "name": "airyhooks",
-  "version": "0.1.0-beta.0",
+  "version": "0.1.0-beta.1",
   "description": "CLI to add React hooks to your project",
   "type": "module",
   "bin": {
     "airyhooks": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "scripts": {
     "build": "tsc",
