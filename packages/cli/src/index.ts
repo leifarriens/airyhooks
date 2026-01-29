@@ -5,6 +5,7 @@ import packageJson from "../package.json" with { type: "json" };
 import { add } from "./commands/add.js";
 import { init } from "./commands/init.js";
 import { list } from "./commands/list.js";
+import { search } from "./commands/search.js";
 
 const program = new Command();
 
@@ -26,5 +27,12 @@ program
   .action(add);
 
 program.command("list").description("List all available hooks").action(list);
+
+program
+  .command("search")
+  .description("Search all available hooks in the registry")
+  .argument("<query>", "The query used to search for a hook")
+  .alias("find")
+  .action(search);
 
 program.parse();
