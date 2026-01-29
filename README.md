@@ -2,6 +2,7 @@
 
 A zero-dependency, TypeScript-first React hooks library delivered via CLI.
 
+> [!IMPORTANT]  
 > **For user documentation**, see the [CLI package README](/packages/cli/README.md) or [npm package page](https://www.npmjs.com/package/airyhooks).
 
 This repository is a monorepo containing:
