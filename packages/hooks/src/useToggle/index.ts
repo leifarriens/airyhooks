@@ -1,1 +1,1 @@
-export { useBoolean, useToggle } from "./useToggle.js";
+export { useToggle } from "./useToggle.js";

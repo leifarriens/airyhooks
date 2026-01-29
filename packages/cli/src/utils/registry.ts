@@ -77,4 +77,36 @@ export const registry: HookDefinition[] = [
     description: "Track scroll position of element or window",
     name: "useScroll",
   },
+  {
+    description: "Copy text to the clipboard",
+    name: "useCopyToClipboard",
+  },
+  {
+    description: "Listen for events on a target element",
+    name: "useEventListener",
+  },
+  {
+    description: "Fetch data with loading and error states",
+    name: "useFetch",
+  },
+  {
+    description: "Track visibility of DOM elements in viewport",
+    name: "useIntersectionObserver",
+  },
+  {
+    description: "Dynamically update the document title",
+    name: "useDocumentTitle",
+  },
+  {
+    description: "Temporarily disable body scrolling",
+    name: "useLockBodyScroll",
+  },
+  {
+    description: "Measure component dimensions with ResizeObserver",
+    name: "useMeasure",
+  },
+  {
+    description: "Check if running on client-side (SSR-safe)",
+    name: "useIsClient",
+  },
 ];

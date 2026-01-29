@@ -1,1 +1,1 @@
-export { useScroll, useScrollElement } from "./useScroll.js";
+export { useScroll } from "./useScroll.js";

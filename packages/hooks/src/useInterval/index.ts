@@ -1,1 +1,1 @@
-export { useInterval, useTimeout } from "./useInterval.js";
+export { useInterval } from "./useInterval.js";

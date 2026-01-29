@@ -23,19 +23,20 @@ interface HookTemplate {
 
 /**
  * Extract exported function names from a TypeScript file content.
+ * Uses a Set to deduplicate names (handles function overloads).
  */
 function extractExportedFunctions(content: string): string[] {
   const exportRegex = /export\s+function\s+(\w+)/g;
-  const matches: string[] = [];
+  const matches = new Set<string>();
   let match: RegExpExecArray | null;
 
   while ((match = exportRegex.exec(content)) !== null) {
     if (match[1]) {
-      matches.push(match[1]);
+      matches.add(match[1]);
     }
   }
 
-  return matches;
+  return [...matches];
 }
 
 /**

@@ -1,7 +1,7 @@
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { useScroll, useScrollElement } from "./useScroll.js";
+import { useScroll } from "./useScroll.js";
 
 describe("useScroll", () => {
   it("should initialize with zero scroll position", () => {
@@ -58,25 +58,5 @@ describe("useScroll", () => {
     );
 
     removeEventListenerSpy.mockRestore();
-  });
-});
-
-describe("useScrollElement", () => {
-  it("should return ref and scroll position", () => {
-    const { result } = renderHook(() => useScrollElement<HTMLDivElement>());
-
-    expect(result.current).toHaveLength(2);
-    expect(result.current[0]).toHaveProperty("current");
-    expect(typeof result.current[1].x).toBe("number");
-    expect(typeof result.current[1].y).toBe("number");
-  });
-
-  it("should provide ref for element scroll tracking", () => {
-    const { result } = renderHook(() => useScrollElement<HTMLDivElement>());
-    const [ref, scroll] = result.current;
-
-    expect(ref).toBeDefined();
-    expect(typeof scroll.x).toBe("number");
-    expect(typeof scroll.y).toBe("number");
   });
 });
