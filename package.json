@@ -7,6 +7,9 @@
     "dev": "turbo dev",
     "build": "turbo build",
     "format": "prettier . --write --cache --cache-location .cache/.prettiercache",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish",
     "lint": "turbo run lint --continue -- --fix --cache --cache-location .cache/.eslintcache",
     "postinstall": "manypkg check",
     "test": "turbo test",
@@ -16,6 +19,7 @@
   "author": "Leif Arriens",
   "license": "MIT",
   "devDependencies": {
+    "@changesets/cli": "^2.28.0",
     "@manypkg/cli": "^0.25.1",
     "@types/node": "^24.0.0",
     "prettier": "^3.8.0",
