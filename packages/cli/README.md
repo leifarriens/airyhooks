@@ -1,20 +1,14 @@
 # airyhooks
 
-Add production-ready React hooks directly to your project—no package installation required.
+![airyhooks logo](/media/logo_embed.png)
 
-airyhooks is a CLI tool that lets you add battle-tested, TypeScript-first React hooks directly to your codebase. Instead of installing a package, you copy exactly what you need. This gives you complete control: modify hooks for your use case, avoid dependency bloat, and eliminate version conflicts.
+Add production-ready React hooks without package installation directly to your project.
+
+`airyhooks` is a CLI tool that lets you add tested, TypeScript-first React hooks directly to your codebase. Instead of installing a package, you copy exactly what you need. This gives you complete control: modify hooks for your use case, avoid dependency bloat, and eliminate version conflicts.
 
 ```bash
 pnpm dlx airyhooks@latest add useDebounce
 ```
-
-## Why airyhooks?
-
-- **Zero Dependencies**: Hooks only depend on React—nothing else
-- **Full Ownership**: Code lives in your repo; customize freely
-- **TypeScript Native**: Complete type safety with generics
-- **Battle-Tested**: 50+ tests, 94%+ coverage
-- **One Command**: Add hooks instantly with the CLI
 
 ## 🚀 Quick Start
 

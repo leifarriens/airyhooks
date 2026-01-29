@@ -2,7 +2,7 @@
 
 A zero-dependency, TypeScript-first React hooks library delivered via CLI.
 
-> **For end-user documentation**, see the [CLI package README](packages/cli/README.md) or [npm package page](https://www.npmjs.com/package/airyhooks).
+> **For user documentation**, see the [CLI package README](/packages/cli/README.md) or [npm package page](https://www.npmjs.com/package/airyhooks).
 
 This repository is a monorepo containing:
 
@@ -10,7 +10,7 @@ This repository is a monorepo containing:
 - `packages/cli` — CLI tool for adding hooks to projects
 - `configs` — Shared ESLint and TypeScript configurations
 
-## 🚀 Getting Started
+## Development Setup
 
 ### Installation
 
@@ -34,13 +34,6 @@ Run all tests across packages:
 
 ```bash
 pnpm test
-```
-
-Run tests with coverage:
-
-```bash
-cd packages/hooks
-pnpm test -- --coverage
 ```
 
 ### Testing the CLI Locally
@@ -99,32 +92,10 @@ Verify the project with Turbo caching:
 # Run all checks
 pnpm lint && pnpm typecheck && pnpm test
 
-# Or run individually
-pnpm lint                    # ESLint check
-pnpm lint:fix                # Auto-fix linting issues
-pnpm typecheck              # TypeScript check
-pnpm test                   # Vitest with coverage
-
 # For specific package
 pnpm --filter @airyhooks/hooks test
 pnpm --filter airyhooks lint
 ```
-
-### Test Coverage
-
-Run tests with coverage report:
-
-```bash
-cd packages/hooks
-pnpm test -- --coverage
-```
-
-Current coverage:
-
-- **Statements**: 95%
-- **Branches**: 84.61%
-- **Functions**: 100%
-- **Lines**: 94.84%
 
 ## 🔧 Development Workflow
 
@@ -143,27 +114,23 @@ touch packages/hooks/src/useMyHook/index.ts
 3. Write comprehensive tests
 4. Add barrel export to `index.ts`
 5. Update registry in `packages/cli/src/utils/registry.ts`
-6. Regenerate templates:
-
-```bash
-pnpm --filter @airyhooks/hooks build:templates
-```
-
-7. Verify:
+6. Verify:
 
 ```bash
 pnpm lint && pnpm typecheck && pnpm test
 ```
 
+> **Note**: Templates are automatically generated when building the CLI via Turborepo's dependency chain.
+
 ### Auto-Generated Templates
 
-Hook templates are automatically generated from source files. After adding or modifying hooks, run:
+Hook templates are automatically generated from source files via Turborepo's dependency chain. When you build the CLI with `pnpm turbo build`, the hooks package's `build:templates` script runs automatically, ensuring the CLI always has the latest hook implementations.
+
+You can also generate templates manually if needed:
 
 ```bash
 pnpm --filter @airyhooks/hooks build:templates
 ```
-
-This ensures the CLI always has the latest hook implementations.
 
 ## How It Works
 
@@ -171,18 +138,6 @@ This ensures the CLI always has the latest hook implementations.
 2. **Template Generation**: Automatically generated from `packages/hooks/src/useDebounce/useDebounce.ts`
 3. **File Creation**: Hook and barrel export are written to your project
 4. **Usage**: Import directly from your local hooks directory
-
-## 🛠️ Tech Stack
-
-- **Monorepo**: [Turborepo](https://turbo.build/) with pnpm workspaces
-- **Language**: TypeScript 5.9+ with strict mode
-- **Testing**: Vitest 4+ with jsdom
-- **CLI**: Commander.js
-- **Code Quality**: ESLint 9+, Prettier 3+
-
-## 📄 License
-
-MIT
 
 ## 🤝 Contributing
 
@@ -193,12 +148,46 @@ Contributions welcome! Please ensure:
 3. Code lints: `pnpm lint`
 4. Test coverage maintained (currently 94%+)
 5. Update CLI registry when adding new hooks
-6. Regenerate templates: `pnpm --filter @airyhooks/hooks build:templates`
+6. Templates auto-generate on CLI build via Turborepo
+7. **Create a changeset** to document your changes (see below)
 
-### Release Process
+### Contributing Workflow
+
+1. Fork the repository and create a feature branch
+2. Make your changes
+3. Run quality checks: `pnpm lint && pnpm typecheck && pnpm test`
+4. Create a changeset to document your changes:
 
 ```bash
-# Bump version in packages/cli/package.json
-cd packages/cli
-npm publish --access public
+pnpm changeset
+```
+
+5. Commit your changes and changeset file
+6. Submit a pull request
+
+### Release Process (Maintainers Only)
+
+This project uses [Changesets](https://github.com/changesets/changesets) for version management and publishing. **Releases are automated via GitHub Actions.**
+
+When changesets are merged to `main`, the [release workflow](.github/workflows/release.yaml) automatically:
+
+1. Runs quality checks
+2. Builds all packages
+3. Creates a "Version Packages" PR that bumps versions based on changesets
+4. When that PR is merged, publishes packages to npm automatically
+
+**Manual release** (if needed):
+
+```bash
+# 1. Run quality checks
+pnpm lint && pnpm typecheck && pnpm test
+
+# 2. Build all packages
+pnpm turbo build
+
+# 3. Version packages based on changesets
+pnpm changeset version
+
+# 4. Publish to npm
+pnpm changeset publish
 ```

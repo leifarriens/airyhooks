@@ -7,7 +7,6 @@ This document provides guidance for AI coding agents working in this TypeScript 
 | Task       | Command          | Description                  |
 | ---------- | ---------------- | ---------------------------- |
 | Lint all   | `pnpm lint`      | Check code style and quality |
-| Lint & fix | `pnpm lint:fix`  | Auto-fix linting issues      |
 | Test all   | `pnpm test`      | Run all tests                |
 | Type check | `pnpm typecheck` | Verify TypeScript types      |
 | Format     | `pnpm format`    | Format code with Prettier    |
