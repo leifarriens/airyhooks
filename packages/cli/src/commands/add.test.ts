@@ -4,13 +4,17 @@ import fs from "fs-extra";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { HookDefinition } from "../utils/registry.js";
+
 import * as config from "../utils/config.js";
 import * as hookTemplate from "../utils/get-hook-template.js";
+import * as registryModule from "../utils/registry.js";
 import { add } from "./add.js";
 
 vi.mock("fs-extra");
 vi.mock("../utils/config.js");
 vi.mock("../utils/get-hook-template.js");
+vi.mock("../utils/registry.js");
 
 function getConsoleOutput(
   spy: MockInstance<(message?: unknown) => void>,
@@ -37,6 +41,17 @@ describe("add", () => {
     vi.mocked(hookTemplate.getHookTemplate).mockReturnValue(
       "// mock template content",
     );
+    vi.mocked(registryModule).registry = [
+      {
+        description: "Debounce a value with a specified delay",
+        name: "useDebounce",
+      },
+      {
+        dependencies: ["lodash"],
+        description: "A hook with dependencies",
+        name: "useWithDeps",
+      },
+    ] as HookDefinition[];
     vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
     vi.mocked(fs.pathExists).mockResolvedValue(false as never);
     vi.mocked(fs.writeFile).mockResolvedValue(undefined);
@@ -120,5 +135,47 @@ describe("add", () => {
 
     const allCalls = getConsoleOutput(consoleSpy);
     expect(allCalls).toContain("airyhooks list");
+  });
+
+  it("should output template to console when raw flag is true", async () => {
+    await add("useDebounce", { raw: true });
+
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).toContain("// mock template content");
+  });
+
+  it("should not create directory when raw flag is true", async () => {
+    await add("useDebounce", { raw: true });
+
+    expect(fs.ensureDir).not.toHaveBeenCalled();
+  });
+
+  it("should not write files when raw flag is true", async () => {
+    await add("useDebounce", { raw: true });
+
+    expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+
+  it("should still fail for non-existent hook with raw flag", async () => {
+    await expect(add("useNonExistent", { raw: true })).rejects.toThrow(
+      "process.exit(1)",
+    );
+
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).toContain("not found");
+  });
+
+  it("should show dependencies after adding hook", async () => {
+    await add("useWithDeps");
+
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).toContain("npm install lodash");
+  });
+
+  it("should show dependencies with raw flag", async () => {
+    await add("useWithDeps", { raw: true });
+
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).toContain("npm install lodash");
   });
 });

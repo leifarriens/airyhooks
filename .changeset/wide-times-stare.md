@@ -2,4 +2,4 @@
 "airyhooks": minor
 ---
 
-Extended hooks registry
+Expand hooks registry with additional hook definitions

@@ -7,7 +7,7 @@ Add production-ready React hooks without package installation directly to your p
 `airyhooks` is a CLI tool that lets you add tested, TypeScript-first React hooks directly to your codebase. Instead of installing a package, you copy exactly what you need. This gives you complete control: modify hooks for your use case, avoid dependency bloat, and eliminate version conflicts.
 
 ```bash
-pnpm dlx airyhooks@latest add useDebounce
+pnpm dlx airyhooks add useDebounce
 ```
 
 ## 🚀 Quick Start
@@ -17,7 +17,7 @@ pnpm dlx airyhooks@latest add useDebounce
 Create the configuration file and set your hooks directory:
 
 ```bash
-pnpm dlx airyhooks@latest init
+pnpm dlx airyhooks init
 ```
 
 This creates `airyhooks.json` in your project root and prompts you for the hooks directory path (default: `./hooks`).
@@ -27,7 +27,7 @@ This creates `airyhooks.json` in your project root and prompts you for the hooks
 Add any hook to your project:
 
 ```bash
-pnpm dlx airyhooks@latest add useDebounce
+pnpm dlx airyhooks add useDebounce
 ```
 
 This creates the following structure:
@@ -59,34 +59,6 @@ export function SearchComponent() {
 }
 ```
 
-## 📖 Commands
-
-### `airyhooks init`
-
-Initialize airyhooks in your project. Creates `airyhooks.json` configuration file and prompts for your hooks directory path.
-
-```bash
-pnpm dlx airyhooks@latest init
-# or
-npx airyhooks@latest init
-```
-
-### `airyhooks add <hook-name>`
-
-Add a specific hook to your project. Creates the hook directory with TypeScript files.
-
-```bash
-pnpm dlx airyhooks@latest add useDebounce
-```
-
-### `airyhooks list`
-
-List all available hooks with descriptions.
-
-```bash
-pnpm dlx airyhooks@latest list
-```
-
 ## 📚 Available Hooks
 
 | Hook                      | Description                                             |
@@ -116,6 +88,45 @@ pnpm dlx airyhooks@latest list
 | `useToggle`               | Toggle a boolean value with convenient handlers         |
 | `useUnmount`              | Call a callback on component unmount                    |
 | `useWindowSize`           | Track window dimensions                                 |
+
+## 📖 Commands
+
+### `airyhooks init`
+
+Initialize airyhooks in your project. Creates `airyhooks.json` configuration file and prompts for your hooks directory path.
+
+```bash
+pnpm dlx airyhooks init
+# or
+npx airyhooks init
+```
+
+### `airyhooks add <hook-name>`
+
+Add a specific hook to your project. Creates the hook directory with TypeScript files.
+
+```bash
+pnpm dlx airyhooks add useDebounce
+```
+
+#### Options
+
+- `--raw` - Output only the raw hook template to console (no files created)
+
+> [!TIP]
+> Use `--raw` to pipe the hook directly to a file or integrate with other tools:
+
+```bash
+pnpm dlx airyhooks add useDebounce --raw > useDebounce.ts
+```
+
+### `airyhooks list`
+
+List all available hooks with descriptions.
+
+```bash
+pnpm dlx airyhooks list
+```
 
 ## 💡 Usage Example
 
@@ -160,16 +171,16 @@ airyhooks works with all major package managers:
 
 ```bash
 # pnpm
-pnpm dlx airyhooks@latest add useDebounce
+pnpm dlx airyhooks add useDebounce
 
 # npm
-npx airyhooks@latest add useDebounce
+npx airyhooks add useDebounce
 
 # yarn
-yarn dlx airyhooks@latest add useDebounce
+yarn dlx airyhooks add useDebounce
 
 # bun
-bunx airyhooks@latest add useDebounce
+bunx airyhooks add useDebounce
 ```
 
 ## 📄 License
@@ -178,4 +189,4 @@ MIT
 
 ---
 
-**Ready to use?** Run `pnpm dlx airyhooks@latest init` to get started!
+**Ready to use?** Run `pnpm dlx airyhooks init` to get started!

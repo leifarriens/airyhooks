@@ -6,7 +6,13 @@ import { getConfig } from "../utils/config.js";
 import { getHookTemplate } from "../utils/get-hook-template.js";
 import { registry } from "../utils/registry.js";
 
-export async function add(hookName: string) {
+interface AddOptions {
+  raw?: boolean;
+}
+
+export async function add(hookName: string, options: AddOptions = {}) {
+  const { raw } = options;
+
   const hook = registry.find(
     (h) => h.name.toLowerCase() === hookName.toLowerCase(),
   );
@@ -19,31 +25,37 @@ export async function add(hookName: string) {
 
   const config = await getConfig();
   const hooksDir = path.join(process.cwd(), config.hooksPath);
-  const hookDir = path.join(hooksDir, hook.name);
+  const hookTargetDir = path.join(hooksDir, hook.name);
 
-  // Ensure hook subdirectory exists
-  await fs.ensureDir(hookDir);
-
-  // Check if hook already exists
-  const hookFilePath = path.join(hookDir, `${hook.name}.ts`);
-  if (await fs.pathExists(hookFilePath)) {
-    console.log(pc.yellow(`⚠ ${hook.name} already exists. Skipping.`));
-    return;
-  }
-
-  // Write hook implementation
   const template = getHookTemplate(hook.name);
-  await fs.writeFile(hookFilePath, template);
-
-  // Write barrel export
-  const barrelFilePath = path.join(hookDir, "index.ts");
   const barrelContent = `export { ${hook.name} } from "./${hook.name}.js";\n`;
-  await fs.writeFile(barrelFilePath, barrelContent);
 
-  console.log(pc.green(`✓ Added ${hook.name}`));
-  console.log(pc.dim(`  → ${path.relative(process.cwd(), hookDir)}/`));
-  console.log(pc.dim(`    ├── ${hook.name}.ts`));
-  console.log(pc.dim(`    └── index.ts`));
+  if (!raw) {
+    // Ensure hook subdirectory exists
+    await fs.ensureDir(hookTargetDir);
+
+    // Check if hook already exists
+    const hookFilePath = path.join(hookTargetDir, `${hook.name}.ts`);
+    if (await fs.pathExists(hookFilePath)) {
+      console.log(pc.yellow(`⚠ ${hook.name} already exists. Skipping.`));
+      return;
+    }
+
+    const barrelFilePath = path.join(hookTargetDir, "index.ts");
+
+    // Write hook implementation
+    await fs.writeFile(hookFilePath, template);
+
+    // Write barrel export
+    await fs.writeFile(barrelFilePath, barrelContent);
+
+    console.log(pc.green(`✓ Added ${hook.name}`));
+    console.log(pc.dim(`  → ${path.relative(process.cwd(), hookTargetDir)}/`));
+    console.log(pc.dim(`    ├── ${hook.name}.ts`));
+    console.log(pc.dim(`    └── index.ts`));
+  } else {
+    console.log(pc.cyan(template));
+  }
 
   if (hook.dependencies && hook.dependencies.length > 0) {
     console.log(pc.dim(`\n  Required dependencies:`));
