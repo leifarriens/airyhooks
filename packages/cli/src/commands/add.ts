@@ -39,7 +39,7 @@ export async function add(hookName: string, options: AddOptions = {}) {
   );
 
   const fetcher = new HooksFetcher();
-  const template = await fetcher.fetchHook(hook.name);
+  const template = await fetcher.fetchHook(hookName);
 
   if (!raw) {
     // Ensure hook subdirectory exists
