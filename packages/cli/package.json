@@ -23,6 +23,8 @@
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "test": "vitest run --coverage",
+    "test:watch": "vitest",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {
@@ -36,8 +38,10 @@
     "@airyhooks/tsconfig": "workspace:*",
     "@types/fs-extra": "^11.0.4",
     "@types/prompts": "^2.4.9",
+    "@vitest/coverage-v8": "^4.0.17",
     "eslint": "^9.38.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.17"
   },
   "keywords": [
     "react",
