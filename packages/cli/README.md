@@ -89,26 +89,33 @@ pnpm dlx airyhooks@latest list
 
 ## 📚 Available Hooks
 
-| Hook                | Description                                             |
-| ------------------- | ------------------------------------------------------- |
-| `useDebounce`       | Debounce a value with a specified delay                 |
-| `useThrottle`       | Throttle a value to update at most once per interval    |
-| `useLocalStorage`   | Sync state with localStorage                            |
-| `useSessionStorage` | Sync state with sessionStorage                          |
-| `usePrevious`       | Track previous state or props value                     |
-| `useToggle`         | Toggle a boolean value with convenient handlers         |
-| `useBoolean`        | Boolean state with setTrue, setFalse, and toggle        |
-| `useMount`          | Call a callback on component mount                      |
-| `useUnmount`        | Call a callback on component unmount                    |
-| `useInterval`       | Call a callback at specified intervals                  |
-| `useTimeout`        | Call a callback after a timeout                         |
-| `useClickAway`      | Detect clicks outside of an element                     |
-| `useWindowSize`     | Track window dimensions                                 |
-| `useCounter`        | Manage numeric state with increment/decrement/reset/set |
-| `useHover`          | Track mouse hover state on elements                     |
-| `useKeyPress`       | Detect specific keyboard key presses                    |
-| `useMedia`          | React to CSS media query changes                        |
-| `useScroll`         | Track scroll position of element or window              |
+| Hook                      | Description                                             |
+| ------------------------- | ------------------------------------------------------- |
+| `useClickAway`            | Detect clicks outside of an element                     |
+| `useCopyToClipboard`      | Copy text to clipboard with status feedback             |
+| `useCounter`              | Manage numeric state with increment/decrement/reset/set |
+| `useDebounce`             | Debounce a value with a specified delay                 |
+| `useDocumentTitle`        | Dynamically update the document title                   |
+| `useEventListener`        | Attach event listeners with automatic cleanup           |
+| `useFetch`                | Fetch data with loading, error, and refetch support     |
+| `useHover`                | Track mouse hover state on elements                     |
+| `useIntersectionObserver` | Track element visibility in viewport                    |
+| `useInterval`             | Call a callback at specified intervals                  |
+| `useIsClient`             | Check if code is running on client (SSR-safe)           |
+| `useKeyPress`             | Detect specific keyboard key presses                    |
+| `useLocalStorage`         | Sync state with localStorage                            |
+| `useLockBodyScroll`       | Prevent body scrolling (useful for modals)              |
+| `useMeasure`              | Measure element dimensions with ResizeObserver          |
+| `useMedia`                | React to CSS media query changes                        |
+| `useMount`                | Call a callback on component mount                      |
+| `usePrevious`             | Track previous state or props value                     |
+| `useScroll`               | Track scroll position of element or window              |
+| `useSessionStorage`       | Sync state with sessionStorage                          |
+| `useThrottle`             | Throttle a value to update at most once per interval    |
+| `useTimeout`              | Call a callback after a timeout                         |
+| `useToggle`               | Toggle a boolean value with convenient handlers         |
+| `useUnmount`              | Call a callback on component unmount                    |
+| `useWindowSize`           | Track window dimensions                                 |
 
 ## 💡 Usage Example
 

@@ -1,1 +1,1 @@
-export { useMount, useUnmount } from "./useMount.js";
+export { useMount } from "./useMount.js";

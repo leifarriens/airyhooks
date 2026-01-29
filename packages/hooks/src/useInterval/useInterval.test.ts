@@ -1,7 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { useInterval, useTimeout } from "./useInterval.js";
+import { useInterval } from "./useInterval.js";
 
 describe("useInterval", () => {
   beforeEach(() => {
@@ -56,39 +56,5 @@ describe("useInterval", () => {
 
     vi.advanceTimersByTime(1000);
     expect(callback).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe("useTimeout", () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
-  it("should call callback after timeout", () => {
-    const callback = vi.fn();
-    renderHook(() => {
-      useTimeout(callback, 2000);
-    });
-
-    expect(callback).not.toHaveBeenCalled();
-
-    vi.advanceTimersByTime(2000);
-    expect(callback).toHaveBeenCalledTimes(1);
-  });
-
-  it("should cleanup timeout on unmount", () => {
-    const callback = vi.fn();
-    const { unmount } = renderHook(() => {
-      useTimeout(callback, 2000);
-    });
-
-    unmount();
-
-    vi.advanceTimersByTime(2000);
-    expect(callback).not.toHaveBeenCalled();
   });
 });

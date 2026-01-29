@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 interface ScrollPosition {
   x: number;
@@ -13,12 +13,14 @@ interface ScrollPosition {
  *
  * @example
  * // Track window scroll
- * const windowScroll = useScroll();
- * console.log(windowScroll.x, windowScroll.y);
+ * const scroll = useScroll();
+ * console.log(scroll.x, scroll.y);
  *
+ * @example
  * // Track element scroll
- * const [ref, elementScroll] = useScroll<HTMLDivElement>();
- * return <div ref={ref}>Content</div>;
+ * const elementRef = useRef<HTMLDivElement>(null);
+ * const scroll = useScroll(elementRef);
+ * return <div ref={elementRef} style={{ overflow: 'auto' }}>Content</div>;
  */
 export function useScroll(
   ref?: React.RefObject<HTMLElement | null>,
@@ -60,31 +62,4 @@ export function useScroll(
   }, [ref, handleScroll]);
 
   return scroll;
-}
-
-/**
- * Tracks scroll position with ref attachment for element scroll.
- *
- * @returns Tuple of [ref, scrollPosition]
- *
- * @example
- * const [ref, scroll] = useScrollElement<HTMLDivElement>();
- *
- * return (
- *   <div
- *     ref={ref}
- *     style={{ height: "200px", overflow: "auto" }}
- *   >
- *     <p>Scroll position: X: {scroll.x}, Y: {scroll.y}</p>
- *   </div>
- * );
- */
-export function useScrollElement<T extends HTMLElement = HTMLElement>(): [
-  React.RefObject<null | T>,
-  ScrollPosition,
-] {
-  const ref = useRef<T>(null);
-  const scroll = useScroll(ref as React.RefObject<HTMLElement | null>);
-
-  return [ref, scroll];
 }

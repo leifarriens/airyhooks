@@ -6,7 +6,7 @@ const templates: Record<string, string> = {
   useBoolean: `import { useCallback, useState } from "react";
 
 /**
- * Alias for useToggle with boolean semantics.
+ * Boolean state with setTrue, setFalse, and toggle handlers.
  *
  * @param initialValue - Initial boolean value (default: false)
  * @returns Tuple of [value, { setTrue, setFalse, toggle }]
@@ -30,48 +30,28 @@ export function useBoolean(initialValue = false): [
     toggle: () => void;
   },
 ] {
-  const [value, toggle, setValue] = useToggle(initialValue);
-
-  return [
-    value,
-    {
-      setFalse: useCallback(() => {
-        setValue(false);
-      }, [setValue]),
-      setTrue: useCallback(() => {
-        setValue(true);
-      }, [setValue]),
-      toggle,
-    },
-  ];
-}
-
-/**
- * Toggle a boolean value with a callback.
- *
- * @param initialValue - Initial boolean value (default: false)
- * @returns Tuple of [value, toggle, setValue]
- *
- * @example
- * const [isOpen, toggle] = useToggle(false);
- *
- * return (
- *   <>
- *     <button onClick={toggle}>Toggle</button>
- *     {isOpen && <div>Content</div>}
- *   </>
- * );
- */
-export function useToggle(
-  initialValue = false,
-): [boolean, () => void, (value: boolean) => void] {
   const [value, setValue] = useState(initialValue);
 
   const toggle = useCallback(() => {
     setValue((prev) => !prev);
   }, []);
 
-  return [value, toggle, setValue];
+  const setTrue = useCallback(() => {
+    setValue(true);
+  }, []);
+
+  const setFalse = useCallback(() => {
+    setValue(false);
+  }, []);
+
+  return [
+    value,
+    {
+      setFalse,
+      setTrue,
+      toggle,
+    },
+  ];
 }
 `,
 
@@ -109,6 +89,63 @@ export function useClickAway<T extends HTMLElement>(
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [ref, callback]);
+}
+`,
+
+  useCopyToClipboard: `import { useCallback, useState } from "react";
+
+export interface UseCopyToClipboardResult {
+  /** The currently copied text, or null if nothing has been copied */
+  copiedText: null | string;
+  /** Function to copy text to clipboard. Returns true if successful. */
+  copy: (text: string) => Promise<boolean>;
+  /** Function to reset the copied state */
+  reset: () => void;
+}
+
+/**
+ * Copy text to the clipboard using the modern Clipboard API.
+ *
+ * @returns Object containing copiedText state, copy function, and reset function
+ *
+ * @example
+ * const { copiedText, copy, reset } = useCopyToClipboard();
+ *
+ * return (
+ *   <button onClick={() => copy("Hello, World!")}>
+ *     {copiedText ? "Copied!" : "Copy"}
+ *   </button>
+ * );
+ */
+export function useCopyToClipboard(): UseCopyToClipboardResult {
+  const [copiedText, setCopiedText] = useState<null | string>(null);
+
+  const copy = useCallback(async (text: string): Promise<boolean> => {
+    // Check if we're in a browser environment with clipboard support
+    const clipboard =
+      typeof window !== "undefined" ? navigator.clipboard : undefined;
+
+    if (!clipboard) {
+      console.warn("Clipboard API not available");
+      return false;
+    }
+
+    try {
+      await clipboard.writeText(text);
+      setCopiedText(text);
+      return true;
+    } catch (error) {
+      console.warn("Failed to copy to clipboard:", error);
+      setCopiedText(null);
+      return false;
+    }
+  }, []);
+
+  const reset = useCallback(() => {
+    setCopiedText(null);
+  }, []);
+
+  return { copiedText, copy, reset };
 }
 `,
 
@@ -207,6 +244,240 @@ export function useDebounce<T>(value: T, delay = 500): T {
 }
 `,
 
+  useDocumentTitle: `import { useEffect, useRef } from "react";
+
+/**
+ * Dynamically update the document title.
+ *
+ * @param title - The title to set for the document
+ * @param restoreOnUnmount - Whether to restore the previous title on unmount (default: true)
+ *
+ * @example
+ * // Basic usage
+ * useDocumentTitle('Home | My App');
+ *
+ * @example
+ * // Dynamic title based on state
+ * useDocumentTitle(\`\${unreadCount} new messages\`);
+ *
+ * @example
+ * // Don't restore title on unmount
+ * useDocumentTitle('Dashboard', false);
+ */
+export function useDocumentTitle(title: string, restoreOnUnmount = true): void {
+  const previousTitle = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    // Store the previous title only on first mount
+    previousTitle.current ??= document.title;
+
+    document.title = title;
+  }, [title]);
+
+  useEffect(() => {
+    return () => {
+      if (restoreOnUnmount && previousTitle.current !== undefined) {
+        document.title = previousTitle.current;
+      }
+    };
+  }, [restoreOnUnmount]);
+}
+`,
+
+  useEventListener: `import { useEffect, useRef } from "react";
+
+/**
+ * Attaches an event listener to a target element or window with automatic cleanup.
+ *
+ * @param eventName - The event type to listen for (e.g., 'click', 'scroll', 'keydown')
+ * @param handler - The event handler function
+ * @param element - The target element or window (default: window)
+ * @param options - Event listener options (capture, passive, once)
+ *
+ * @example
+ * // Listen for clicks on window
+ * useEventListener('click', (e) => console.log('Clicked!'));
+ *
+ * @example
+ * // Listen for clicks on a specific element
+ * const buttonRef = useRef<HTMLButtonElement>(null);
+ * useEventListener('click', handleClick, buttonRef);
+ *
+ * @example
+ * // With options
+ * useEventListener('scroll', handleScroll, window, { passive: true });
+ */
+export function useEventListener<K extends keyof WindowEventMap>(
+  eventName: K,
+  handler: (event: WindowEventMap[K]) => void,
+  element?: Window,
+  options?: AddEventListenerOptions | boolean,
+): void;
+export function useEventListener<
+  K extends keyof HTMLElementEventMap,
+  T extends HTMLElement = HTMLDivElement,
+>(
+  eventName: K,
+  handler: (event: HTMLElementEventMap[K]) => void,
+  element: React.RefObject<null | T>,
+  options?: AddEventListenerOptions | boolean,
+): void;
+export function useEventListener<K extends keyof DocumentEventMap>(
+  eventName: K,
+  handler: (event: DocumentEventMap[K]) => void,
+  element: Document,
+  options?: AddEventListenerOptions | boolean,
+): void;
+export function useEventListener<
+  KW extends keyof WindowEventMap,
+  KH extends keyof HTMLElementEventMap,
+  KD extends keyof DocumentEventMap,
+  T extends HTMLElement = HTMLElement,
+>(
+  eventName: KD | KH | KW,
+  handler: (
+    event:
+      | DocumentEventMap[KD]
+      | Event
+      | HTMLElementEventMap[KH]
+      | WindowEventMap[KW],
+  ) => void,
+  element?: Document | React.RefObject<null | T> | Window,
+  options?: AddEventListenerOptions | boolean,
+): void {
+  const savedHandler = useRef(handler);
+
+  useEffect(() => {
+    savedHandler.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    let targetElement: Document | Element | null | Window;
+
+    if (element === undefined) {
+      targetElement = window;
+    } else if (element instanceof Document || element instanceof Window) {
+      targetElement = element;
+    } else {
+      targetElement = element.current;
+    }
+
+    if (!targetElement?.addEventListener) {
+      return;
+    }
+
+    const eventListener: typeof handler = (event) => {
+      savedHandler.current(event);
+    };
+
+    targetElement.addEventListener(eventName, eventListener, options);
+
+    return () => {
+      targetElement.removeEventListener(eventName, eventListener, options);
+    };
+  }, [eventName, element, options]);
+}
+`,
+
+  useFetch: `import { useCallback, useEffect, useRef, useState } from "react";
+
+export interface UseFetchOptions<T> {
+  /** Whether to fetch immediately on mount (default: true) */
+  immediate?: boolean;
+  /** Initial data before fetch completes */
+  initialData?: T;
+}
+
+export interface UseFetchResult<T> {
+  /** The fetched data, or undefined if not yet loaded */
+  data: T | undefined;
+  /** Error object if the fetch failed */
+  error: Error | null;
+  /** Whether a fetch is currently in progress */
+  isLoading: boolean;
+  /** Function to manually trigger a refetch */
+  refetch: () => Promise<void>;
+}
+
+/**
+ * Fetch data from a URL with loading and error states.
+ *
+ * @param url - The URL to fetch data from
+ * @param options - Configuration options
+ * @returns Object containing data, loading state, error, and refetch function
+ *
+ * @example
+ * const { data, isLoading, error, refetch } = useFetch<User[]>('/api/users');
+ *
+ * if (isLoading) return <Spinner />;
+ * if (error) return <Error message={error.message} />;
+ * return <UserList users={data} />;
+ *
+ * @example
+ * // With initial data and manual fetch
+ * const { data, refetch } = useFetch<User>('/api/user', {
+ *   initialData: { name: 'Loading...' },
+ *   immediate: false,
+ * });
+ */
+export function useFetch<T>(
+  url: string,
+  options: UseFetchOptions<T> = {},
+): UseFetchResult<T> {
+  const { immediate = true, initialData } = options;
+
+  const [data, setData] = useState<T | undefined>(initialData);
+  const [error, setError] = useState<Error | null>(null);
+  const [isLoading, setIsLoading] = useState(immediate);
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const fetchData = useCallback(async () => {
+    // Cancel any in-flight request
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = new AbortController();
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(url, {
+        signal: abortControllerRef.current.signal,
+      });
+
+      if (!response.ok) {
+        throw new Error(\`HTTP error! status: \${String(response.status)}\`);
+      }
+
+      const result = (await response.json()) as T;
+      setData(result);
+    } catch (err) {
+      if (err instanceof Error && err.name !== "AbortError") {
+        setError(err);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [url]);
+
+  useEffect(() => {
+    if (immediate) {
+      void fetchData();
+    }
+
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, [fetchData, immediate]);
+
+  return { data, error, isLoading, refetch: fetchData };
+}
+`,
+
   useHover: `import { useCallback, useRef, useState } from "react";
 
 /**
@@ -276,10 +547,115 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
 }
 `,
 
+  useIntersectionObserver: `import { useEffect, useRef, useState } from "react";
+
+export interface UseIntersectionObserverOptions {
+  /** Whether to stop observing after the first intersection (default: false) */
+  once?: boolean;
+  /** The element used as the viewport for checking visibility (default: browser viewport) */
+  root?: Element | null;
+  /** Margin around the root element (e.g., "10px 20px 30px 40px") */
+  rootMargin?: string;
+  /** A number or array of numbers indicating at what percentage of visibility the callback should trigger */
+  threshold?: number | number[];
+}
+
+export interface UseIntersectionObserverResult {
+  /** The current intersection observer entry */
+  entry: IntersectionObserverEntry | null;
+  /** Whether the element is currently intersecting */
+  isIntersecting: boolean;
+  /** Ref to attach to the element to observe */
+  ref: React.RefObject<HTMLElement | null>;
+}
+
+/**
+ * Track the visibility of a DOM element within the viewport using IntersectionObserver.
+ *
+ * @param options - IntersectionObserver configuration options
+ * @returns Object containing ref, entry, and isIntersecting state
+ *
+ * @example
+ * // Basic usage - lazy load an image
+ * const { ref, isIntersecting } = useIntersectionObserver();
+ *
+ * return (
+ *   <div ref={ref}>
+ *     {isIntersecting && <img src="large-image.jpg" />}
+ *   </div>
+ * );
+ *
+ * @example
+ * // Infinite scroll with threshold
+ * const { ref, isIntersecting } = useIntersectionObserver({
+ *   threshold: 0.5,
+ *   rootMargin: '100px',
+ * });
+ *
+ * useEffect(() => {
+ *   if (isIntersecting) loadMoreItems();
+ * }, [isIntersecting]);
+ */
+export function useIntersectionObserver(
+  options: UseIntersectionObserverOptions = {},
+): UseIntersectionObserverResult {
+  const {
+    once = false,
+    root = null,
+    rootMargin = "0px",
+    threshold = 0,
+  } = options;
+
+  const ref = useRef<HTMLElement | null>(null);
+  const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
+  const hasTriggered = useRef(false);
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element || (once && hasTriggered.current)) {
+      return;
+    }
+
+    if (typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([observerEntry]) => {
+        if (!observerEntry) {
+          return;
+        }
+
+        setEntry(observerEntry);
+
+        if (once && observerEntry.isIntersecting) {
+          hasTriggered.current = true;
+          observer.disconnect();
+        }
+      },
+      { root, rootMargin, threshold },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [root, rootMargin, threshold, once]);
+
+  return {
+    entry,
+    isIntersecting: entry?.isIntersecting ?? false,
+    ref,
+  };
+}
+`,
+
   useInterval: `import { useEffect } from "react";
 
 /**
- * Re-renders component at specified interval.
+ * Calls a callback at specified intervals.
  *
  * @param callback - Function to call on each interval
  * @param delay - Interval delay in milliseconds (null to pause)
@@ -288,6 +664,10 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
  * useInterval(() => {
  *   setTime(new Date());
  * }, 1000);
+ *
+ * @example
+ * // Pause interval by passing null
+ * useInterval(callback, isPaused ? null : 1000);
  */
 export function useInterval(callback: () => void, delay: null | number): void {
   useEffect(() => {
@@ -299,25 +679,46 @@ export function useInterval(callback: () => void, delay: null | number): void {
     };
   }, [callback, delay]);
 }
+`,
+
+  useIsClient: `import { useEffect, useState } from "react";
 
 /**
- * Re-renders component after a timeout.
+ * Determine if the code is running on the client-side.
+ * Useful for SSR-safe code that needs to access browser APIs.
  *
- * @param callback - Function to call after timeout
- * @param delay - Timeout delay in milliseconds
+ * @returns true if running on client, false during SSR
  *
  * @example
- * useTimeout(() => {
- *   console.log("Timeout completed");
- * }, 2000);
+ * const isClient = useIsClient();
+ *
+ * if (!isClient) {
+ *   return <div>Loading...</div>;
+ * }
+ *
+ * // Safe to use browser APIs
+ * return <div>Window width: {window.innerWidth}</div>;
+ *
+ * @example
+ * // Conditionally render client-only components
+ * const isClient = useIsClient();
+ *
+ * return (
+ *   <div>
+ *     <Header />
+ *     {isClient && <ClientOnlyMap />}
+ *     <Footer />
+ *   </div>
+ * );
  */
-export function useTimeout(callback: () => void, delay: number): void {
+export function useIsClient(): boolean {
+  const [isClient, setIsClient] = useState(false);
+
   useEffect(() => {
-    const timeout = setTimeout(callback, delay);
-    return () => {
-      clearTimeout(timeout);
-    };
-  }, [callback, delay]);
+    setIsClient(true);
+  }, []);
+
+  return isClient;
 }
 `,
 
@@ -458,6 +859,179 @@ export function useLocalStorage<T>(
 }
 `,
 
+  useLockBodyScroll: `import { useEffect, useRef } from "react";
+
+/**
+ * Temporarily disable scrolling on the document body.
+ * Useful for modals, drawers, and other overlays.
+ *
+ * @example
+ * // Lock body scroll when modal is open
+ * function Modal({ isOpen }) {
+ *   useLockBodyScroll(isOpen);
+ *
+ *   if (!isOpen) return null;
+ *   return <div className="modal">...</div>;
+ * }
+ *
+ * @example
+ * // Always lock when component is mounted
+ * function FullscreenOverlay() {
+ *   useLockBodyScroll();
+ *   return <div className="overlay">...</div>;
+ * }
+ */
+export function useLockBodyScroll(lock = true): void {
+  const originalStyle = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    if (!lock) {
+      return;
+    }
+
+    // Store the original overflow style
+    originalStyle.current = document.body.style.overflow;
+
+    // Lock the body scroll
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      // Restore the original overflow style
+      document.body.style.overflow = originalStyle.current ?? "";
+    };
+  }, [lock]);
+}
+`,
+
+  useMeasure: `import { useCallback, useEffect, useRef, useState } from "react";
+
+export interface UseMeasureRect {
+  /** Bottom position relative to viewport */
+  bottom: number;
+  /** Element height */
+  height: number;
+  /** Left position relative to viewport */
+  left: number;
+  /** Right position relative to viewport */
+  right: number;
+  /** Top position relative to viewport */
+  top: number;
+  /** Element width */
+  width: number;
+  /** X position (same as left) */
+  x: number;
+  /** Y position (same as top) */
+  y: number;
+}
+
+export interface UseMeasureResult<T extends Element> {
+  /** The measured dimensions of the element */
+  rect: UseMeasureRect;
+  /** Ref to attach to the element to measure */
+  ref: React.RefCallback<T>;
+}
+
+const defaultRect: UseMeasureRect = {
+  bottom: 0,
+  height: 0,
+  left: 0,
+  right: 0,
+  top: 0,
+  width: 0,
+  x: 0,
+  y: 0,
+};
+
+/**
+ * Measure the dimensions of a DOM element using ResizeObserver.
+ *
+ * @returns Object containing ref callback and rect measurements
+ *
+ * @example
+ * const { ref, rect } = useMeasure<HTMLDivElement>();
+ *
+ * return (
+ *   <div ref={ref}>
+ *     <p>Width: {rect.width}px</p>
+ *     <p>Height: {rect.height}px</p>
+ *   </div>
+ * );
+ *
+ * @example
+ * // Responsive component
+ * const { ref, rect } = useMeasure<HTMLDivElement>();
+ * const isCompact = rect.width < 400;
+ *
+ * return (
+ *   <nav ref={ref} className={isCompact ? 'compact' : 'full'}>
+ *     {isCompact ? <MobileMenu /> : <DesktopMenu />}
+ *   </nav>
+ * );
+ */
+export function useMeasure<
+  T extends Element = HTMLDivElement,
+>(): UseMeasureResult<T> {
+  const [element, setElement] = useState<null | T>(null);
+  const [rect, setRect] = useState<UseMeasureRect>(defaultRect);
+
+  const observerRef = useRef<null | ResizeObserver>(null);
+
+  const ref = useCallback((node: null | T) => {
+    setElement(node);
+  }, []);
+
+  useEffect(() => {
+    if (!element) {
+      return;
+    }
+
+    if (typeof ResizeObserver === "undefined") {
+      // Fallback: get initial dimensions without observing changes
+      const boundingRect = element.getBoundingClientRect();
+      setRect({
+        bottom: boundingRect.bottom,
+        height: boundingRect.height,
+        left: boundingRect.left,
+        right: boundingRect.right,
+        top: boundingRect.top,
+        width: boundingRect.width,
+        x: boundingRect.x,
+        y: boundingRect.y,
+      });
+      return;
+    }
+
+    observerRef.current = new ResizeObserver(([entry]) => {
+      if (entry) {
+        const boundingRect = entry.target.getBoundingClientRect();
+        setRect({
+          bottom: boundingRect.bottom,
+          height: boundingRect.height,
+          left: boundingRect.left,
+          right: boundingRect.right,
+          top: boundingRect.top,
+          width: boundingRect.width,
+          x: boundingRect.x,
+          y: boundingRect.y,
+        });
+      }
+    });
+
+    observerRef.current.observe(element);
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [element]);
+
+  return { rect, ref };
+}
+`,
+
   useMedia: `import { useEffect, useState } from "react";
 
 /**
@@ -512,7 +1086,7 @@ export function useMedia(query: string): boolean {
 }
 `,
 
-  useMount: `import { useEffect, useRef } from "react";
+  useMount: `import { useEffect } from "react";
 
 /**
  * Calls a callback on component mount.
@@ -527,31 +1101,6 @@ export function useMedia(query: string): boolean {
  */
 export function useMount(callback: () => void): void {
   useEffect(callback, []);
-}
-
-/**
- * Calls a callback on component unmount.
- *
- * @param callback - Function to call on unmount
- *
- * @example
- * useUnmount(() => {
- *   console.log("Component unmounting");
- *   // Cleanup resources
- * });
- */
-export function useUnmount(callback: () => void): void {
-  const callbackRef = useRef(callback);
-
-  useEffect(() => {
-    callbackRef.current = callback;
-  }, [callback]);
-
-  useEffect(() => {
-    return () => {
-      callbackRef.current();
-    };
-  }, []);
 }
 `,
 
@@ -582,7 +1131,7 @@ export function usePrevious<T>(value: T): T | undefined {
 }
 `,
 
-  useScroll: `import { useCallback, useEffect, useRef, useState } from "react";
+  useScroll: `import { useCallback, useEffect, useState } from "react";
 
 interface ScrollPosition {
   x: number;
@@ -597,12 +1146,14 @@ interface ScrollPosition {
  *
  * @example
  * // Track window scroll
- * const windowScroll = useScroll();
- * console.log(windowScroll.x, windowScroll.y);
+ * const scroll = useScroll();
+ * console.log(scroll.x, scroll.y);
  *
+ * @example
  * // Track element scroll
- * const [ref, elementScroll] = useScroll<HTMLDivElement>();
- * return <div ref={ref}>Content</div>;
+ * const elementRef = useRef<HTMLDivElement>(null);
+ * const scroll = useScroll(elementRef);
+ * return <div ref={elementRef} style={{ overflow: 'auto' }}>Content</div>;
  */
 export function useScroll(
   ref?: React.RefObject<HTMLElement | null>,
@@ -644,125 +1195,6 @@ export function useScroll(
   }, [ref, handleScroll]);
 
   return scroll;
-}
-
-/**
- * Tracks scroll position with ref attachment for element scroll.
- *
- * @returns Tuple of [ref, scrollPosition]
- *
- * @example
- * const [ref, scroll] = useScrollElement<HTMLDivElement>();
- *
- * return (
- *   <div
- *     ref={ref}
- *     style={{ height: "200px", overflow: "auto" }}
- *   >
- *     <p>Scroll position: X: {scroll.x}, Y: {scroll.y}</p>
- *   </div>
- * );
- */
-export function useScrollElement<T extends HTMLElement = HTMLElement>(): [
-  React.RefObject<null | T>,
-  ScrollPosition,
-] {
-  const ref = useRef<T>(null);
-  const scroll = useScroll(ref as React.RefObject<HTMLElement | null>);
-
-  return [ref, scroll];
-}
-`,
-
-  useScrollElement: `import { useCallback, useEffect, useRef, useState } from "react";
-
-interface ScrollPosition {
-  x: number;
-  y: number;
-}
-
-/**
- * Tracks scroll position of an element or the window.
- *
- * @param ref - Optional ref to an element. If not provided, tracks window scroll
- * @returns Object with x and y scroll positions
- *
- * @example
- * // Track window scroll
- * const windowScroll = useScroll();
- * console.log(windowScroll.x, windowScroll.y);
- *
- * // Track element scroll
- * const [ref, elementScroll] = useScroll<HTMLDivElement>();
- * return <div ref={ref}>Content</div>;
- */
-export function useScroll(
-  ref?: React.RefObject<HTMLElement | null>,
-): ScrollPosition {
-  const [scroll, setScroll] = useState<ScrollPosition>({ x: 0, y: 0 });
-
-  const handleScroll = useCallback(() => {
-    if (ref?.current) {
-      setScroll({
-        x: ref.current.scrollLeft,
-        y: ref.current.scrollTop,
-      });
-    } else if (typeof window !== "undefined") {
-      setScroll({
-        x: window.scrollX,
-        y: window.scrollY,
-      });
-    }
-  }, [ref]);
-
-  useEffect(() => {
-    // Set initial scroll position
-    handleScroll();
-
-    if (ref?.current) {
-      // Listen to element scroll
-      const target = ref.current;
-      target.addEventListener("scroll", handleScroll);
-      return () => {
-        target.removeEventListener("scroll", handleScroll);
-      };
-    } else if (typeof window !== "undefined") {
-      // Listen to window scroll
-      window.addEventListener("scroll", handleScroll);
-      return () => {
-        window.removeEventListener("scroll", handleScroll);
-      };
-    }
-  }, [ref, handleScroll]);
-
-  return scroll;
-}
-
-/**
- * Tracks scroll position with ref attachment for element scroll.
- *
- * @returns Tuple of [ref, scrollPosition]
- *
- * @example
- * const [ref, scroll] = useScrollElement<HTMLDivElement>();
- *
- * return (
- *   <div
- *     ref={ref}
- *     style={{ height: "200px", overflow: "auto" }}
- *   >
- *     <p>Scroll position: X: {scroll.x}, Y: {scroll.y}</p>
- *   </div>
- * );
- */
-export function useScrollElement<T extends HTMLElement = HTMLElement>(): [
-  React.RefObject<null | T>,
-  ScrollPosition,
-] {
-  const ref = useRef<T>(null);
-  const scroll = useScroll(ref as React.RefObject<HTMLElement | null>);
-
-  return [ref, scroll];
 }
 `,
 
@@ -885,40 +1317,26 @@ export function useThrottle<T>(value: T, interval = 500): T {
   useTimeout: `import { useEffect } from "react";
 
 /**
- * Re-renders component at specified interval.
- *
- * @param callback - Function to call on each interval
- * @param delay - Interval delay in milliseconds (null to pause)
- *
- * @example
- * useInterval(() => {
- *   setTime(new Date());
- * }, 1000);
- */
-export function useInterval(callback: () => void, delay: null | number): void {
-  useEffect(() => {
-    if (delay === null) return;
-
-    const interval = setInterval(callback, delay);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [callback, delay]);
-}
-
-/**
- * Re-renders component after a timeout.
+ * Calls a callback after a timeout.
  *
  * @param callback - Function to call after timeout
- * @param delay - Timeout delay in milliseconds
+ * @param delay - Timeout delay in milliseconds (null to disable)
  *
  * @example
  * useTimeout(() => {
  *   console.log("Timeout completed");
  * }, 2000);
+ *
+ * @example
+ * // Disable timeout by passing null
+ * useTimeout(() => {
+ *   console.log("This won't run");
+ * }, null);
  */
-export function useTimeout(callback: () => void, delay: number): void {
+export function useTimeout(callback: () => void, delay: null | number): void {
   useEffect(() => {
+    if (delay === null) return;
+
     const timeout = setTimeout(callback, delay);
     return () => {
       clearTimeout(timeout);
@@ -928,47 +1346,6 @@ export function useTimeout(callback: () => void, delay: number): void {
 `,
 
   useToggle: `import { useCallback, useState } from "react";
-
-/**
- * Alias for useToggle with boolean semantics.
- *
- * @param initialValue - Initial boolean value (default: false)
- * @returns Tuple of [value, { setTrue, setFalse, toggle }]
- *
- * @example
- * const [isEnabled, handlers] = useBoolean(false);
- *
- * return (
- *   <>
- *     <button onClick={handlers.toggle}>Toggle</button>
- *     <button onClick={handlers.setTrue}>Enable</button>
- *     <button onClick={handlers.setFalse}>Disable</button>
- *   </>
- * );
- */
-export function useBoolean(initialValue = false): [
-  boolean,
-  {
-    setFalse: () => void;
-    setTrue: () => void;
-    toggle: () => void;
-  },
-] {
-  const [value, toggle, setValue] = useToggle(initialValue);
-
-  return [
-    value,
-    {
-      setFalse: useCallback(() => {
-        setValue(false);
-      }, [setValue]),
-      setTrue: useCallback(() => {
-        setValue(true);
-      }, [setValue]),
-      toggle,
-    },
-  ];
-}
 
 /**
  * Toggle a boolean value with a callback.
@@ -1000,21 +1377,6 @@ export function useToggle(
 `,
 
   useUnmount: `import { useEffect, useRef } from "react";
-
-/**
- * Calls a callback on component mount.
- *
- * @param callback - Function to call on mount
- *
- * @example
- * useMount(() => {
- *   console.log("Component mounted");
- *   // Initialize resources
- * });
- */
-export function useMount(callback: () => void): void {
-  useEffect(callback, []);
-}
 
 /**
  * Calls a callback on component unmount.
