@@ -3,8 +3,8 @@ import path from "node:path";
 import pc from "picocolors";
 
 import { getConfig } from "../utils/config.js";
-import { getHookTemplate } from "../utils/get-hook-template.js";
 import { registry } from "../utils/registry.js";
+import { HooksFetcher } from "../utils/remote-fetch.js";
 
 interface AddOptions {
   raw?: boolean;
@@ -27,7 +27,8 @@ export async function add(hookName: string, options: AddOptions = {}) {
   const hooksDir = path.join(process.cwd(), config.hooksPath);
   const hookTargetDir = path.join(hooksDir, hook.name);
 
-  const template = getHookTemplate(hook.name);
+  const fetcher = new HooksFetcher();
+  const template = await fetcher.fetchHook(hookName);
   const barrelContent = `export { ${hook.name} } from "./${hook.name}.js";\n`;
 
   if (!raw) {
