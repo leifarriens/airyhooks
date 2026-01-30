@@ -3,6 +3,7 @@ import path from "node:path";
 import pc from "picocolors";
 
 import { getConfig } from "../utils/config.js";
+import { getFileExtension } from "../utils/get-file-extension.js";
 import { getHookFileBaseName } from "../utils/get-hook-filename.js";
 import { registry } from "../utils/registry.js";
 import { HooksFetcher } from "../utils/remote-fetch.js";
@@ -32,10 +33,13 @@ export async function add(hookName: string, options: AddOptions = {}) {
 
   const hooksDir = path.join(process.cwd(), config.hooksPath);
   const casedHookName = getHookFileBaseName(hook.name, config.casing);
-  const hookTargetDir = path.join(hooksDir, casedHookName);
+  const hookTargetDir = path.join(
+    hooksDir,
+    config.structure === "nested" ? casedHookName : "",
+  );
 
   const fetcher = new HooksFetcher();
-  const template = await fetcher.fetchHook(hookName);
+  const template = await fetcher.fetchHook(hook.name);
 
   if (!raw) {
     // Ensure hook subdirectory exists
@@ -46,6 +50,7 @@ export async function add(hookName: string, options: AddOptions = {}) {
     // Check if hook already exists
     if (!force && (await fs.pathExists(hookFilePath))) {
       console.log(pc.yellow(`⚠ ${casedHookName} already exists. Skipping.`));
+      console.log(pc.dim("Use --force to overwrite existing hooks."));
       return;
     }
 
@@ -54,14 +59,22 @@ export async function add(hookName: string, options: AddOptions = {}) {
     // Write hook implementation
     await fs.writeFile(hookFilePath, template);
 
-    // Write barrel export
-    const barrelContent = `export { ${hook.name} } from "./${casedHookName}.js";\n`;
-    await fs.writeFile(barrelFilePath, barrelContent);
+    if (config.structure === "nested") {
+      // Write barrel file for nested structure
+      const barrelContent = `export { ${hook.name} } from "./${casedHookName}${getFileExtension(config.importExtension)}";\n`;
+      await fs.writeFile(barrelFilePath, barrelContent);
+    }
 
+    const relativeHookDir = path.relative(process.cwd(), hookTargetDir);
     console.log(pc.green(`✓ Added ${hook.name}`));
-    console.log(pc.dim(`  → ${path.relative(process.cwd(), hookTargetDir)}/`));
-    console.log(pc.dim(`    ├── ${casedHookName}.ts`));
-    console.log(pc.dim(`    └── index.ts`));
+    if (config.structure === "nested") {
+      console.log(pc.dim(`  → ${relativeHookDir}/`));
+      console.log(pc.dim(`    ├── ${casedHookName}.ts`));
+      console.log(pc.dim(`    └── index.ts`));
+    } else {
+      console.log(pc.dim(`  → ${relativeHookDir}/`));
+      console.log(pc.dim(`    └── ${casedHookName}.ts`));
+    }
   } else {
     console.log(pc.cyan(template));
   }

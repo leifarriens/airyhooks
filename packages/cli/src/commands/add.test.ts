@@ -255,4 +255,74 @@ describe("add", () => {
       'export { useDebounce } from "./useDebounce";\n',
     );
   });
+
+  describe("structure option", () => {
+    it("should create hook in subdirectory with barrel file when structure is nested", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        structure: "nested",
+      });
+
+      await add("useDebounce");
+
+      expect(fs.ensureDir).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks", "useDebounce"),
+      );
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks/useDebounce", "useDebounce.ts"),
+        "// mock template content",
+      );
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks/useDebounce", "index.ts"),
+        'export { useDebounce } from "./useDebounce";\n',
+      );
+    });
+
+    it("should create hook directly in hooks directory when structure is flat", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        structure: "flat",
+      });
+
+      await add("useDebounce");
+
+      expect(fs.ensureDir).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks"),
+      );
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks", "useDebounce.ts"),
+        "// mock template content",
+      );
+    });
+
+    it("should not create barrel file when structure is flat", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        structure: "flat",
+      });
+
+      await add("useDebounce");
+
+      const writeFileCalls = vi.mocked(fs.writeFile).mock.calls;
+      const indexFileCall = writeFileCalls.find((call) =>
+        String(call[0]).endsWith("index.ts"),
+      );
+      expect(indexFileCall).toBeUndefined();
+    });
+
+    it("should use kebab-case with flat structure", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        casing: "kebab-case",
+        structure: "flat",
+      });
+
+      await add("useDebounce");
+
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks", "use-debounce.ts"),
+        "// mock template content",
+      );
+    });
+  });
 });

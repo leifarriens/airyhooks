@@ -192,6 +192,7 @@ The `airyhooks.json` file stores your configuration:
 | ----------------- | ------------------------------- | ------------- | ------------------------------------------------ |
 | `hooksPath`       | `string`                        | `"src/hooks"` | Directory path where hooks are added             |
 | `casing`          | `"camelCase"` \| `"kebab-case"` | `"camelCase"` | Naming convention for hook directories and files |
+| `structure`       | `"flat"` \| `"nested"`          | `"flat"`      | Directory structure for hooks                    |
 | `importExtension` | `"none"` \| `"js"` \| `"ts"`    | `"none"`      | File extension used in barrel export imports     |
 
 #### `hooksPath`
@@ -224,9 +225,34 @@ hooks/use-debounce/
 > [!TIP]
 > You can override casing per-command with the `--kebab` flag: `airyhooks add useDebounce --kebab`
 
+#### `structure`
+
+Controls the directory structure for added hooks:
+
+- `"flat"` — All hooks are added directly under the `hooksPath` directory.
+- `"nested"` — Each hook gets its own subdirectory under `hooksPath`.
+
+```
+# flat (default)
+hooks/
+├── useDebounce.ts
+└── useToggle.ts
+
+# nested
+hooks/
+├── useDebounce/
+│   ├── useDebounce.ts
+│   └── index.ts
+└── useToggle/
+    ├── useToggle.ts
+    └── index.ts
+```
+
 #### `importExtension`
 
-Controls the file extension in the generated `index.ts` barrel export. Choose based on your TypeScript configuration:
+Controls the file extension in the generated `index.ts` barrel export. Only relevant when using the `structure: nested`.
+
+Choose based on your TypeScript configuration:
 
 | Value    | Output                                           | When to use                                         |
 | -------- | ------------------------------------------------ | --------------------------------------------------- |

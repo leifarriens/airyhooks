@@ -64,6 +64,7 @@ describe("init", () => {
         casing: "camelCase",
         hooksPath: "src/hooks",
         importExtension: "none",
+        structure: "nested",
       },
       { spaces: 2 },
     );

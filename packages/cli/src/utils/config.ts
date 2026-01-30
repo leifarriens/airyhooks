@@ -13,6 +13,10 @@ export interface AiryhooksConfig {
    * Use `none` when using `moduleResolution: bundler`.
    */
   importExtension: "js" | "none" | "ts";
+  /**
+   * Whether hooks are organized in a flat directory structure or nested.
+   */
+  structure: "flat" | "nested";
 }
 
 export type Casing = "camelCase" | "kebab-case";
@@ -21,6 +25,7 @@ export const DEFAULT_CONFIG: Readonly<AiryhooksConfig> = {
   casing: "camelCase",
   hooksPath: "src/hooks",
   importExtension: "none",
+  structure: "nested",
 };
 
 export async function getConfig(
