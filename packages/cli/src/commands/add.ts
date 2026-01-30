@@ -9,12 +9,13 @@ import { getHookTemplate } from "../utils/get-hook-template.js";
 import { registry } from "../utils/registry.js";
 
 interface AddOptions {
+  force?: boolean;
   kebab?: boolean;
   raw?: boolean;
 }
 
 export async function add(hookName: string, options: AddOptions = {}) {
-  const { kebab, raw } = options;
+  const { force, kebab, raw } = options;
 
   const hook = registry.find(
     (h) => h.name.toLowerCase() === hookName.toLowerCase(),
@@ -44,7 +45,7 @@ export async function add(hookName: string, options: AddOptions = {}) {
     const hookFilePath = path.join(hookTargetDir, `${casedHookName}.ts`);
 
     // Check if hook already exists
-    if (await fs.pathExists(hookFilePath)) {
+    if (!force && (await fs.pathExists(hookFilePath))) {
       console.log(pc.yellow(`⚠ ${casedHookName} already exists. Skipping.`));
       return;
     }

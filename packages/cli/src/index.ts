@@ -25,6 +25,11 @@ program
   .argument("<hook>", "Name of the hook to add (e.g., useDebounce)")
   .option("-r --raw", "Output only the raw hook template to console", false)
   .option(
+    "-f --force",
+    "Force overwrite if the hook file already exists",
+    false,
+  )
+  .option(
     "-k --kebab",
     "Use kebab-case for the hook file and directory names. Overrides the default casing in config.",
     false,

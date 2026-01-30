@@ -223,4 +223,36 @@ describe("add", () => {
     const allCalls = getConsoleOutput(consoleSpy);
     expect(allCalls).toContain("npm install lodash");
   });
+
+  it("should overwrite hook when force flag is true and file exists", async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(true as never);
+
+    await add("useDebounce", { force: true });
+
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.join(mockCwd, "src/hooks/useDebounce", "useDebounce.ts"),
+      "// mock template content",
+    );
+  });
+
+  it("should not show skip warning when force flag is true", async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(true as never);
+
+    await add("useDebounce", { force: true });
+
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).not.toContain("already exists");
+    expect(allCalls).toContain("Added useDebounce");
+  });
+
+  it("should write barrel file when force flag is true and file exists", async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(true as never);
+
+    await add("useDebounce", { force: true });
+
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.join(mockCwd, "src/hooks/useDebounce", "index.ts"),
+      'export { useDebounce } from "./useDebounce";\n',
+    );
+  });
 });
