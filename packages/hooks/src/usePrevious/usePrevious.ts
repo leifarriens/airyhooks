@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useState } from "react";
 
 /**
  * Tracks the previous value or prop.
@@ -15,11 +15,13 @@ import { useEffect, useRef } from "react";
  * }, [count, prevCount]);
  */
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T | undefined>(undefined);
+  const [current, setCurrent] = useState<T>(value);
+  const [previous, setPrevious] = useState<T | undefined>(undefined);
 
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
+  if (current !== value) {
+    setPrevious(current);
+    setCurrent(value);
+  }
 
-  return ref.current;
+  return previous;
 }

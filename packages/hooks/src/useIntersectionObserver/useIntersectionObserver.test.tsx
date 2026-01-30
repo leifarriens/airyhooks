@@ -38,20 +38,20 @@ describe("useIntersectionObserver", () => {
   });
 
   it("should return ref, entry, and isIntersecting", () => {
-    let result: ReturnType<typeof useIntersectionObserver> | undefined;
+    let hookResult: ReturnType<typeof useIntersectionObserver> | undefined;
 
     const Component = () => {
-      result = useIntersectionObserver();
+      hookResult = useIntersectionObserver();
       return (
-        <div ref={result.ref as React.RefObject<HTMLDivElement>}>Test</div>
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
       );
     };
 
     render(<Component />);
 
-    expect(result?.ref).toBeDefined();
-    expect(result?.entry).toBeNull();
-    expect(result?.isIntersecting).toBe(false);
+    expect(hookResult?.ref).toBeDefined();
+    expect(hookResult?.entry).toBeNull();
+    expect(hookResult?.isIntersecting).toBe(false);
   });
 
   it("should observe the element", () => {
@@ -66,12 +66,12 @@ describe("useIntersectionObserver", () => {
   });
 
   it("should update isIntersecting when element becomes visible", async () => {
-    let result: ReturnType<typeof useIntersectionObserver> | undefined;
+    let hookResult: ReturnType<typeof useIntersectionObserver>;
 
     const Component = () => {
-      result = useIntersectionObserver();
+      hookResult = useIntersectionObserver();
       return (
-        <div ref={result.ref as React.RefObject<HTMLDivElement>}>Test</div>
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
       );
     };
 
@@ -90,8 +90,8 @@ describe("useIntersectionObserver", () => {
     mockCallback([mockEntry]);
 
     await waitFor(() => {
-      expect(result?.isIntersecting).toBe(true);
-      expect(result?.entry).toBe(mockEntry);
+      expect(hookResult.isIntersecting).toBe(true);
+      expect(hookResult.entry).toBe(mockEntry);
     });
   });
 
@@ -129,12 +129,12 @@ describe("useIntersectionObserver", () => {
   });
 
   it("should disconnect after first intersection when once is true", async () => {
-    let result: ReturnType<typeof useIntersectionObserver> | undefined;
+    let hookResult: ReturnType<typeof useIntersectionObserver>;
 
     const Component = () => {
-      result = useIntersectionObserver({ once: true });
+      hookResult = useIntersectionObserver({ once: true });
       return (
-        <div ref={result.ref as React.RefObject<HTMLDivElement>}>Test</div>
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
       );
     };
 
@@ -147,19 +147,19 @@ describe("useIntersectionObserver", () => {
     mockCallback([mockEntry]);
 
     await waitFor(() => {
-      expect(result?.isIntersecting).toBe(true);
+      expect(hookResult.isIntersecting).toBe(true);
     });
 
     expect(mockDisconnect).toHaveBeenCalled();
   });
 
   it("should not disconnect when once is true but not intersecting", async () => {
-    let result: ReturnType<typeof useIntersectionObserver> | undefined;
+    let hookResult: ReturnType<typeof useIntersectionObserver>;
 
     const Component = () => {
-      result = useIntersectionObserver({ once: true });
+      hookResult = useIntersectionObserver({ once: true });
       return (
-        <div ref={result.ref as React.RefObject<HTMLDivElement>}>Test</div>
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
       );
     };
 
@@ -172,7 +172,7 @@ describe("useIntersectionObserver", () => {
     mockCallback([mockEntry]);
 
     await waitFor(() => {
-      expect(result?.isIntersecting).toBe(false);
+      expect(hookResult.isIntersecting).toBe(false);
     });
 
     // Should not disconnect because it hasn't intersected yet

@@ -83,6 +83,7 @@ export function useMeasure<
     if (typeof ResizeObserver === "undefined") {
       // Fallback: get initial dimensions without observing changes
       const boundingRect = element.getBoundingClientRect();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect({
         bottom: boundingRect.bottom,
         height: boundingRect.height,

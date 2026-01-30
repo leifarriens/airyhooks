@@ -4,9 +4,9 @@
     "target": "es2023",
     "lib": ["ES2023"],
 
-    "module": "nodenext",
+    "module": "preserve",
     "moduleDetection": "force",
-    "moduleResolution": "nodenext",
+    "moduleResolution": "bundler",
     "verbatimModuleSyntax": true,
 
     "strict": true,
@@ -17,7 +17,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "exactOptionalPropertyTypes": true,
-    "noPropertyAccessFromIndexSignature": true,
+    "noPropertyAccessFromIndexSignature": false,
     "forceConsistentCasingInFileNames": true,
 
     "resolveJsonModule": true,
@@ -28,5 +28,9 @@
 
     "tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json"
   },
-  "include": ["${configDir}/src"]
+  "include": [
+    "${configDir}/*.config.ts",
+    "${configDir}/*.config.mjs",
+    "${configDir}/src"
+  ]
 }
