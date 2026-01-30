@@ -1,11 +1,3 @@
 {
-  "extends": "@airyhooks/tsconfig/lib.json",
-  "compilerOptions": {
-    "outDir": "dist",
-    "rootDir": "src",
-    "resolveJsonModule": true,
-    "emitDeclarationOnly": false,
-    "noEmit": true
-  },
-  "include": ["src"]
+  "extends": "@airyhooks/tsconfig/base.json"
 }
