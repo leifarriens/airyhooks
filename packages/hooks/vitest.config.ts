@@ -2,8 +2,9 @@ import { defineConfig } from "vitest/config";
 
 export default defineConfig({
   test: {
-    environment: "jsdom",
     coverage: {
+      exclude: ["src/**/*.test.ts", "src/index.ts"],
+      include: ["src/**/*.ts"],
       provider: "v8",
       thresholds: {
         branches: 80,
@@ -11,8 +12,7 @@ export default defineConfig({
         lines: 94,
         statements: 94,
       },
-      include: ["src/**/*.ts"],
-      exclude: ["src/**/*.test.ts", "src/index.ts"],
     },
+    environment: "jsdom",
   },
 });

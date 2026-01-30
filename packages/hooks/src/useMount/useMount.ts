@@ -12,5 +12,6 @@ import { useEffect } from "react";
  * });
  */
 export function useMount(callback: () => void): void {
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only run on mount
   useEffect(callback, []);
 }

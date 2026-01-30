@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Determine if the code is running on the client-side.
@@ -29,11 +29,14 @@ import { useEffect, useState } from "react";
  * );
  */
 export function useIsClient(): boolean {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  return isClient;
+  return useSyncExternalStore(
+    () => {
+      // Subscribe function that returns cleanup noop
+      return function noopCleanup() {
+        // Intentionally empty - no subscriptions needed
+      };
+    },
+    () => true, // Client snapshot - always true on client
+    () => false, // Server snapshot - always false during SSR
+  );
 }
