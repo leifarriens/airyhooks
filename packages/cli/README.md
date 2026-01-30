@@ -23,7 +23,7 @@ pnpm dlx airyhooks init
 This creates `airyhooks.json` in your project root and prompts you for the hooks directory path (default: `./hooks`).
 
 > [!NOTE]  
-> You can use `airyhooks` without initialization. It will use the [default configuration](/#configuration).
+> You can use `airyhooks` without initialization. It will use the [default configuration](#-configuration).
 
 ### 2. Start Adding Hooks
 
@@ -76,6 +76,7 @@ export function SearchComponent() {
 | `useCopyToClipboard`      | Copy text to clipboard with status feedback             |
 | `useCounter`              | Manage numeric state with increment/decrement/reset/set |
 | `useDebounce`             | Debounce a value with a specified delay                 |
+| `useDebouncedCallback`    | Debounce a callback function with cancel support        |
 | `useDocumentTitle`        | Dynamically update the document title                   |
 | `useEventListener`        | Attach event listeners with automatic cleanup           |
 | `useFetch`                | Fetch data with loading, error, and refetch support     |
@@ -93,6 +94,7 @@ export function SearchComponent() {
 | `useScroll`               | Track scroll position of element or window              |
 | `useSessionStorage`       | Sync state with sessionStorage                          |
 | `useThrottle`             | Throttle a value to update at most once per interval    |
+| `useThrottledCallback`    | Throttle a callback with leading/trailing options       |
 | `useTimeout`              | Call a callback after a timeout                         |
 | `useToggle`               | Toggle a boolean value with convenient handlers         |
 | `useUnmount`              | Call a callback on component unmount                    |

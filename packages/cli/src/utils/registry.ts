@@ -10,8 +10,16 @@ export const registry: HookDefinition[] = [
     name: "useDebounce",
   },
   {
+    description: "Debounce a callback function with cancel support",
+    name: "useDebouncedCallback",
+  },
+  {
     description: "Throttle a value to update at most once per interval",
     name: "useThrottle",
+  },
+  {
+    description: "Throttle a callback function with leading/trailing options",
+    name: "useThrottledCallback",
   },
   {
     description: "Sync state with localStorage",
