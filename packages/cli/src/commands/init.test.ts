@@ -16,6 +16,11 @@ function getConsoleOutput(
   return spy.mock.calls.map((call) => String(call[0])).join("\n");
 }
 
+const defaultPromptsResolveMock = {
+  casing: "camelCase",
+  hooksPath: "src/hooks",
+};
+
 describe("init", () => {
   const mockCwd = "/test/project";
   let consoleSpy: MockInstance<(message?: unknown) => void>;
@@ -33,27 +38,32 @@ describe("init", () => {
   });
 
   it("should prompt for hooks path when no config exists", async () => {
-    vi.mocked(prompts).mockResolvedValue({ hooksPath: "src/hooks" });
+    vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
 
     await init();
 
     expect(prompts).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: "Where would you like to store your hooks?",
-        name: "hooksPath",
-        type: "text",
-      }),
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: "Where would you like to store your hooks?",
+          name: "hooksPath",
+          type: "text",
+        }),
+      ]),
     );
   });
 
   it("should create config file with user-specified path", async () => {
-    vi.mocked(prompts).mockResolvedValue({ hooksPath: "lib/my-hooks" });
+    vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
 
     await init();
 
     expect(fs.writeJson).toHaveBeenCalledWith(
       path.join(mockCwd, "airyhooks.json"),
-      { hooksPath: "lib/my-hooks" },
+      {
+        casing: "camelCase",
+        hooksPath: "src/hooks",
+      },
       { spaces: 2 },
     );
   });
@@ -87,7 +97,10 @@ describe("init", () => {
   });
 
   it("should cancel when user provides no hooks path", async () => {
-    vi.mocked(prompts).mockResolvedValue({ hooksPath: undefined });
+    vi.mocked(prompts).mockResolvedValue({
+      ...defaultPromptsResolveMock,
+      hooksPath: undefined,
+    });
 
     await init();
 
@@ -97,7 +110,7 @@ describe("init", () => {
   });
 
   it("should log success message after creating config", async () => {
-    vi.mocked(prompts).mockResolvedValue({ hooksPath: "src/hooks" });
+    vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
 
     await init();
 
@@ -105,15 +118,31 @@ describe("init", () => {
     expect(allCalls).toContain("Created airyhooks.json");
   });
 
-  it("should use default path as initial prompt value", async () => {
-    vi.mocked(prompts).mockResolvedValue({ hooksPath: "src/hooks" });
+  it("should use default path as initial prompt value for hooksPath", async () => {
+    vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
 
     await init();
 
     expect(prompts).toHaveBeenCalledWith(
-      expect.objectContaining({
-        initial: "src/hooks",
-      }),
+      expect.arrayContaining([
+        expect.objectContaining({
+          initial: "src/hooks",
+        }),
+      ]),
+    );
+  });
+
+  it("should use camelCase as initial prompt value for casing", async () => {
+    vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
+
+    await init();
+
+    expect(prompts).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          initial: 0, // Index of 'camelCase' in choices
+        }),
+      ]),
     );
   });
 });

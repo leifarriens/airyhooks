@@ -24,6 +24,11 @@ program
   .description("Add a hook to your project")
   .argument("<hook>", "Name of the hook to add (e.g., useDebounce)")
   .option("-r --raw", "Output only the raw hook template to console", false)
+  .option(
+    "-k --kebab",
+    "Use kebab-case for the hook file and directory names. Overrides the default casing in config.",
+    false,
+  )
   .action(add);
 
 program.command("list").description("List all available hooks").action(list);
