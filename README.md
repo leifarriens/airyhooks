@@ -39,7 +39,7 @@ pnpm test
 
 ### Testing the CLI Locally
 
-#### Option 1: Global Link (Recommended)
+#### Option 1: Global Link
 
 ```bash
 # Build and create global link
@@ -141,16 +141,6 @@ pnpm --filter @airyhooks/hooks build:templates
 4. **Usage**: Import directly from your local hooks directory
 
 ## 🤝 Contributing
-
-Contributions welcome! Please ensure:
-
-1. All tests pass: `pnpm test`
-2. Types check: `pnpm typecheck`
-3. Code lints: `pnpm lint`
-4. Test coverage maintained (currently 94%+)
-5. Update CLI registry when adding new hooks
-6. Templates auto-generate on CLI build via Turborepo
-7. **Create a changeset** to document your changes (see below)
 
 ### Contributing Workflow
 

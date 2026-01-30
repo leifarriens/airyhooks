@@ -2,12 +2,12 @@
 
 ![airyhooks logo](/media/logo_embed.png)
 
-Add production-ready React hooks without package installation directly to your project.
+Add production-ready zero-dependency React hooks without package installation directly to your project.
 
 `airyhooks` is a CLI tool that lets you add tested, TypeScript-first React hooks directly to your codebase. Instead of installing a package, you copy exactly what you need. This gives you complete control: modify hooks for your use case, avoid dependency bloat, and eliminate version conflicts.
 
 ```bash
-pnpm dlx airyhooks add useDebounce
+pnpm dlx airyhooks
 ```
 
 ## 🚀 Quick Start
@@ -22,9 +22,18 @@ pnpm dlx airyhooks init
 
 This creates `airyhooks.json` in your project root and prompts you for the hooks directory path (default: `./hooks`).
 
-### 2. Add a Hook
+> [!NOTE]  
+> You can use `airyhooks` without initialization. It will use the [default configuration](/#configuration).
 
-Add any hook to your project:
+### 2. Start Adding Hooks
+
+Pick from all available hooks and add them to your project:
+
+```bash
+pnpm dlx airyhooks
+```
+
+Or add a specific hook directly:
 
 ```bash
 pnpm dlx airyhooks add useDebounce
@@ -101,6 +110,16 @@ pnpm dlx airyhooks init
 npx airyhooks init
 ```
 
+### `airyhooks`
+
+Run the interactive hook picker to browse and add hooks to your project.
+
+```bash
+pnpm dlx airyhooks
+# or
+npx airyhooks
+```
+
 ### `airyhooks add <hook-name>`
 
 Add a specific hook to your project. Creates the hook directory with TypeScript files.
@@ -159,11 +178,59 @@ The `airyhooks.json` file stores your configuration:
 
 ```json
 {
-  "hooksPath": "./hooks"
+  "casing": "camelCase",
+  "hooksPath": "src/hooks",
+  "importExtension": "none"
 }
 ```
 
-You can manually edit this file to change the hooks directory path.
+### Options
+
+| Option            | Type                            | Default       | Description                                      |
+| ----------------- | ------------------------------- | ------------- | ------------------------------------------------ |
+| `hooksPath`       | `string`                        | `"src/hooks"` | Directory path where hooks are added             |
+| `casing`          | `"camelCase"` \| `"kebab-case"` | `"camelCase"` | Naming convention for hook directories and files |
+| `importExtension` | `"none"` \| `"js"` \| `"ts"`    | `"none"`      | File extension used in barrel export imports     |
+
+#### `hooksPath`
+
+The directory where hooks will be created. Can be any valid path relative to your project root.
+
+```json
+{ "hooksPath": "src/lib/hooks" }
+```
+
+#### `casing`
+
+Controls the naming convention for hook directories and files:
+
+- `"camelCase"` — Keeps the original hook name (e.g., `useDebounce/useDebounce.ts`)
+- `"kebab-case"` — Converts to kebab-case (e.g., `use-debounce/use-debounce.ts`)
+
+```
+# camelCase (default)
+hooks/useDebounce/
+├── useDebounce.ts
+└── index.ts
+
+# kebab-case
+hooks/use-debounce/
+├── use-debounce.ts
+└── index.ts
+```
+
+> [!TIP]
+> You can override casing per-command with the `--kebab` flag: `airyhooks add useDebounce --kebab`
+
+#### `importExtension`
+
+Controls the file extension in the generated `index.ts` barrel export. Choose based on your TypeScript configuration:
+
+| Value    | Output                                           | When to use                                         |
+| -------- | ------------------------------------------------ | --------------------------------------------------- |
+| `"none"` | `export { useDebounce } from "./useDebounce"`    | `moduleResolution: "bundler"` (Vite, webpack, etc.) |
+| `"js"`   | `export { useDebounce } from "./useDebounce.js"` | `moduleResolution: "nodenext"` or `"node16"`        |
+| `"ts"`   | `export { useDebounce } from "./useDebounce.ts"` | `allowImportingTsExtensions: true` in tsconfig      |
 
 ## 📦 Package Managers
 
@@ -182,10 +249,6 @@ yarn dlx airyhooks add useDebounce
 # bun
 bunx airyhooks add useDebounce
 ```
-
-## 📄 License
-
-MIT
 
 ---
 

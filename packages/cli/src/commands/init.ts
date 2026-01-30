@@ -55,9 +55,9 @@ export async function init() {
   ]);
 
   const hooksPath = response.hooksPath as string | undefined;
-  const casing = response.casing as Casing;
+  const casing = response.casing as Casing | undefined;
 
-  if (!hooksPath) {
+  if (!hooksPath || !casing) {
     console.log(pc.yellow("Initialization cancelled."));
     return;
   }

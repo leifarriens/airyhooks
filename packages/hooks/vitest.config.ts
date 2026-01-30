@@ -11,6 +11,8 @@ export default defineConfig({
         lines: 94,
         statements: 94,
       },
+      include: ["src/**/*.ts"],
+      exclude: ["src/**/*.test.ts", "src/index.ts"],
     },
   },
 });
