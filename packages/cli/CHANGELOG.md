@@ -1,5 +1,12 @@
 # airyhooks
 
+## 0.3.0
+
+### Minor Changes
+
+- eb52ebe: Configuration option for `structure` of hook files
+- 7b3126c: Add `useDebouncedCallback` and `useThrottledCallback` hooks
+
 ## 0.2.0
 
 ### Minor Changes
