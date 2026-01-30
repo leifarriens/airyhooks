@@ -2,5 +2,6 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "explicit"
   },
-  "conventionalCommits.scopes": ["cli", "hooks"]
+  "conventionalCommits.scopes": ["cli", "hooks"],
+  "typescript.preferences.importModuleSpecifierEnding": "js"
 }

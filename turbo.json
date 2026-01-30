@@ -39,6 +39,9 @@
       "interactive": true,
       "persistent": true,
       "cache": false
+    },
+    "clean": {
+      "cache": false
     }
   },
   "globalDependencies": ["**/.env"],

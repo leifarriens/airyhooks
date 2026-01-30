@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "build:templates": "tsx scripts/generate-templates.ts",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",

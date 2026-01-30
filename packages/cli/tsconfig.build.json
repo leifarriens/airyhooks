@@ -1,7 +1,6 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "@airyhooks/tsconfig/build-node.json",
   "compilerOptions": {
-    "noEmit": false
-  },
-  "exclude": ["**/*.test.ts", "**/*.spec.ts", "node_modules"]
+    "rootDir": "src"
+  }
 }
