@@ -37,10 +37,7 @@ describe("add", () => {
         throw new Error(`process.exit(${String(code)})`);
       });
 
-    vi.mocked(config.getConfig).mockResolvedValue({
-      casing: "camelCase",
-      hooksPath: "src/hooks",
-    });
+    vi.mocked(config.getConfig).mockResolvedValue(config.DEFAULT_CONFIG);
     vi.mocked(hookTemplate.getHookTemplate).mockReturnValue(
       "// mock template content",
     );
@@ -112,6 +109,20 @@ describe("add", () => {
 
     expect(fs.writeFile).toHaveBeenCalledWith(
       path.join(mockCwd, "src/hooks/useDebounce", "index.ts"),
+      'export { useDebounce } from "./useDebounce";\n',
+    );
+  });
+
+  it("should write barrel export file with given importExtension", async () => {
+    vi.mocked(config.getConfig).mockResolvedValue({
+      ...config.DEFAULT_CONFIG,
+      importExtension: "js",
+    });
+
+    await add("useDebounce");
+
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.join(mockCwd, "src/hooks/useDebounce", "index.ts"),
       'export { useDebounce } from "./useDebounce.js";\n',
     );
   });
@@ -125,7 +136,7 @@ describe("add", () => {
 
   it("should use custom hooks path from config", async () => {
     vi.mocked(config.getConfig).mockResolvedValue({
-      casing: "camelCase",
+      ...config.DEFAULT_CONFIG,
       hooksPath: "lib/hooks",
     });
 
@@ -138,6 +149,7 @@ describe("add", () => {
 
   it("should write file in kebab-case when casing is kebab-case", async () => {
     vi.mocked(config.getConfig).mockResolvedValue({
+      ...config.DEFAULT_CONFIG,
       casing: "kebab-case",
       hooksPath: "lib/hooks",
     });
@@ -151,6 +163,7 @@ describe("add", () => {
 
   it("should write file in kebab-case when kebab option is true", async () => {
     vi.mocked(config.getConfig).mockResolvedValue({
+      ...config.DEFAULT_CONFIG,
       casing: "kebab-case",
       hooksPath: "lib/hooks",
     });
