@@ -1,5 +1,16 @@
 # airyhooks
 
+## 0.2.0
+
+### Minor Changes
+
+- 6b07b4d: Add support for `--raw` output format in `add` command
+- fbc3ead: `--force` flag to overwrite existing hooks
+- 4afd147: Configuration option for `importExtension`
+- aa2595f: Configuration option for `casing` of hook files
+- 4a6b04c: Search hooks with entry command or `search` alias
+- 0d457ae: Expand hooks registry with additional hook definitions
+
 ## 0.1.0
 
 ### Minor Changes
