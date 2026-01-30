@@ -1,6 +1,6 @@
 # airyhooks
 
-![airyhooks logo](/media/logo_embed.png)
+![airyhooks logo](https://raw.githubusercontent.com/leifarriens/airyhooks/HEAD/media/logo_embed.png)
 
 Add production-ready zero-dependency React hooks without package installation directly to your project.
 
