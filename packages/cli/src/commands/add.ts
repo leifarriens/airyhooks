@@ -3,6 +3,7 @@ import path from "node:path";
 import pc from "picocolors";
 
 import { getConfig } from "../utils/config.js";
+import { getFileExtension } from "../utils/get-file-extension.js";
 import { getHookFileBaseName } from "../utils/get-hook-filename.js";
 import { getHookTemplate } from "../utils/get-hook-template.js";
 import { registry } from "../utils/registry.js";
@@ -34,7 +35,7 @@ export async function add(hookName: string, options: AddOptions = {}) {
   const hookTargetDir = path.join(hooksDir, casedHookName);
 
   const template = getHookTemplate(hook.name);
-  const barrelContent = `export { ${hook.name} } from "./${casedHookName}.js";\n`;
+  const barrelContent = `export { ${hook.name} } from "./${casedHookName}${getFileExtension(config.importExtension)}";\n`;
 
   if (!raw) {
     // Ensure hook subdirectory exists

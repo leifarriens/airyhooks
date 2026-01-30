@@ -4,6 +4,15 @@ import path from "node:path";
 export interface AiryhooksConfig {
   casing: Casing;
   hooksPath: string;
+  /**
+   * File extension for imports.
+   * Use `js` when `moduleResolution` is set to `nodenext` in tsconfig.
+   *
+   * Use `ts` when `allowImportingTsExtensions` is enabled.
+   *
+   * Use `none` when using `moduleResolution: bundler`.
+   */
+  importExtension: "js" | "none" | "ts";
 }
 
 export type Casing = "camelCase" | "kebab-case";
@@ -11,6 +20,7 @@ export type Casing = "camelCase" | "kebab-case";
 export const DEFAULT_CONFIG: Readonly<AiryhooksConfig> = {
   casing: "camelCase",
   hooksPath: "src/hooks",
+  importExtension: "none",
 };
 
 export async function getConfig(
