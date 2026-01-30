@@ -745,7 +745,7 @@ export function useInterval(callback: () => void, delay: null | number): void {
 }
 `,
 
-  useIsClient: `import { useEffect, useState } from "react";
+  useIsClient: `import { useSyncExternalStore } from "react";
 
 /**
  * Determine if the code is running on the client-side.
@@ -776,13 +776,16 @@ export function useInterval(callback: () => void, delay: null | number): void {
  * );
  */
 export function useIsClient(): boolean {
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  return isClient;
+  return useSyncExternalStore(
+    () => {
+      // Subscribe function that returns cleanup noop
+      return function noopCleanup() {
+        // Intentionally empty - no subscriptions needed
+      };
+    },
+    () => true, // Client snapshot - always true on client
+    () => false, // Server snapshot - always false during SSR
+  );
 }
 `,
 
@@ -1056,6 +1059,7 @@ export function useMeasure<
     if (typeof ResizeObserver === "undefined") {
       // Fallback: get initial dimensions without observing changes
       const boundingRect = element.getBoundingClientRect();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect({
         bottom: boundingRect.bottom,
         height: boundingRect.height,
@@ -1128,6 +1132,7 @@ export function useMedia(query: string): boolean {
       const mediaQueryList = window.matchMedia(query);
 
       // Set initial value
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setMatches(mediaQueryList.matches);
 
       // Create listener function
@@ -1164,11 +1169,12 @@ export function useMedia(query: string): boolean {
  * });
  */
 export function useMount(callback: () => void): void {
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only run on mount
   useEffect(callback, []);
 }
 `,
 
-  usePrevious: `import { useEffect, useRef } from "react";
+  usePrevious: `import { useState } from "react";
 
 /**
  * Tracks the previous value or prop.
@@ -1185,13 +1191,15 @@ export function useMount(callback: () => void): void {
  * }, [count, prevCount]);
  */
 export function usePrevious<T>(value: T): T | undefined {
-  const ref = useRef<T | undefined>(undefined);
+  const [current, setCurrent] = useState<T>(value);
+  const [previous, setPrevious] = useState<T | undefined>(undefined);
 
-  useEffect(() => {
-    ref.current = value;
-  }, [value]);
+  if (current !== value) {
+    setPrevious(current);
+    setCurrent(value);
+  }
 
-  return ref.current;
+  return previous;
 }
 `,
 
@@ -1353,6 +1361,7 @@ export function useSessionStorage<T>(
  */
 export function useThrottle<T>(value: T, interval = 500): T {
   const [throttledValue, setThrottledValue] = useState<T>(value);
+  // eslint-disable-next-line react-hooks/purity
   const lastUpdated = useRef<number>(Date.now());
 
   useEffect(() => {

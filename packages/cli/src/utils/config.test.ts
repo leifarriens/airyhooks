@@ -26,6 +26,14 @@ describe("config", () => {
     it("should have default casing", () => {
       expect(DEFAULT_CONFIG.casing).toBe("camelCase");
     });
+
+    it("should have default importExtension", () => {
+      expect(DEFAULT_CONFIG.importExtension).toBe("none");
+    });
+
+    it("should have default structure", () => {
+      expect(DEFAULT_CONFIG.structure).toBe("nested");
+    });
   });
 
   describe("getConfig", () => {
@@ -78,6 +86,15 @@ describe("config", () => {
       expect(fs.pathExists).toHaveBeenCalledWith(
         path.join(mockCwd, "airyhooks.json"),
       );
+    });
+
+    it("should merge structure from user config", async () => {
+      vi.mocked(fs.pathExists).mockResolvedValue(true as never);
+      vi.mocked(fs.readJson).mockResolvedValue({ structure: "flat" });
+
+      const config = await getConfig();
+
+      expect(config.structure).toBe("flat");
     });
   });
 });
