@@ -1,6 +1,6 @@
 {
   "name": "airyhooks",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "CLI to add React hooks to your project",
   "type": "module",
   "publishConfig": {

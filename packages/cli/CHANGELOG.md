@@ -1,5 +1,11 @@
 # airyhooks
 
+## 0.3.1
+
+### Patch Changes
+
+- bda720e: fix import of hooks using `.tsx` file extension
+
 ## 0.3.0
 
 ### Minor Changes
