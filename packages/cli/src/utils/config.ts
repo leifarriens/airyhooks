@@ -13,6 +13,7 @@ export interface AiryhooksConfig {
    * Use `none` when using `moduleResolution: bundler`.
    */
   importExtension: "js" | "none" | "ts";
+  includeTests: boolean;
   /**
    * Whether hooks are organized in a flat directory structure or nested.
    */
@@ -25,6 +26,7 @@ export const DEFAULT_CONFIG: Readonly<AiryhooksConfig> = {
   casing: "camelCase",
   hooksPath: "src/hooks",
   importExtension: "none",
+  includeTests: false,
   structure: "nested",
 };
 

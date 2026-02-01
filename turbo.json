@@ -11,7 +11,7 @@
     },
     "build:templates": {
       "dependsOn": ["^build:templates"],
-      "outputs": ["../cli/src/utils/get-hook-template.ts"],
+      "outputs": ["../cli/src/utils/hook-templates.ts"],
       "inputs": ["src/**/use*.ts", "scripts/generate-templates.ts"]
     },
     "airyhooks#build": {

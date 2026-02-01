@@ -36,6 +36,11 @@ program
     "Use kebab-case for the hook file and directory names. Overrides the default casing in config.",
     false,
   )
+  .option(
+    "--include-tests",
+    "Include test files when adding hooks. Overrides the default setting in config.",
+    false,
+  )
   .action(add);
 
 program.command("list").description("List all available hooks").action(list);
