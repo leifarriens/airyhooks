@@ -40,19 +40,25 @@ export class HooksFetcher {
   }
 
   async fetchHookTest(hookName: string): Promise<string> {
-    const path = `/src/${hookName}/${hookName}.test.ts`;
     const cacheKey = `hook-test-${hookName}`;
 
-    try {
-      const content = await this.fetchFile(path, cacheKey);
+    // Try .test.ts first, fallback to .test.tsx
+    for (const ext of [".test.ts", ".test.tsx"]) {
+      const path = `/${hookName}/${hookName}${ext}`;
 
-      return content;
-    } catch (error) {
-      if (error instanceof NotFoundError) {
-        throw new Error(`Hook "${hookName}" testfile not found.`);
+      try {
+        const content = await this.fetchFile(path, cacheKey);
+
+        return content;
+      } catch (error) {
+        if (error instanceof NotFoundError) {
+          continue;
+        }
+        throw error;
       }
-      throw error;
     }
+
+    throw new Error(`Hook "${hookName}" testfile not found.`);
   }
 
   private async fetchFile(path: string, cacheKey: string) {
@@ -63,8 +69,6 @@ export class HooksFetcher {
     }
 
     const url = `${this.getGithubRawBase()}/${path}`;
-
-    console.log("Fetching from URL:", url);
 
     const response = await fetch(url);
 
