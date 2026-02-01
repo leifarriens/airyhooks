@@ -68,6 +68,9 @@ importers:
       prompts:
         specifier: ^2.4.2
         version: 2.4.2
+      yocto-spinner:
+        specifier: ^1.0.0
+        version: 1.0.0
     devDependencies:
       '@airyhooks/eslint-config':
         specifier: workspace:*
@@ -2077,6 +2080,14 @@ packages:
     resolution: {integrity: sha512-AyeEbWOu/TAXdxlV9wmGcR0+yh2j3vYPGOECcIj2S7MkrLyC7ne+oye2BKTItt0ii2PHk4cDy+95+LshzbXnGg==}
     engines: {node: '>=12.20'}
 
+  yocto-spinner@1.0.0:
+    resolution: {integrity: sha512-VPX8P/+Z2Fnpx8PC/JELbxp3QRrBxjAekio6yulGtA5gKt9YyRc5ycCb+NHgZCbZ0kx9KxwZp7gC6UlrCcCdSQ==}
+    engines: {node: '>=18.19'}
+
+  yoctocolors@2.1.2:
+    resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
+    engines: {node: '>=18'}
+
   zod-validation-error@4.0.2:
     resolution: {integrity: sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ==}
     engines: {node: '>=18.0.0'}
@@ -3997,6 +4008,12 @@ snapshots:
   yocto-queue@0.1.0: {}
 
   yocto-queue@1.2.1: {}
+
+  yocto-spinner@1.0.0:
+    dependencies:
+      yoctocolors: 2.1.2
+
+  yoctocolors@2.1.2: {}
 
   zod-validation-error@4.0.2(zod@4.3.6):
     dependencies:

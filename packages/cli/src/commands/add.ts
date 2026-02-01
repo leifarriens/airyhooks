@@ -1,6 +1,7 @@
 import fs from "fs-extra";
 import path from "node:path";
 import pc from "picocolors";
+import yoctoSpinner from "yocto-spinner";
 
 import { getConfig } from "../utils/config.js";
 import { type AiryhooksConfig } from "../utils/config.js";
@@ -46,9 +47,11 @@ export async function add(hookName: string, options: AddOptions = {}) {
     config.structure === "nested" ? casedHookName : "",
   );
 
+  const spinner = yoctoSpinner({ text: `Adding ${hook.name}` }).start();
   const fetcher = new HooksFetcher();
   const template = await fetcher.fetchHook(hookName);
   const testTemplate = await fetcher.fetchHookTest(hookName);
+  spinner.stop();
 
   if (!raw) {
     // Ensure hook subdirectory exists
