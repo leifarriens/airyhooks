@@ -182,18 +182,21 @@ The `airyhooks.json` file stores your configuration:
 {
   "casing": "camelCase",
   "hooksPath": "src/hooks",
-  "importExtension": "none"
+  "importExtension": "none",
+  "includeTests": false,
+  "structure": "nested"
 }
 ```
 
 ### Options
 
-| Option            | Type                            | Default       | Description                                      |
-| ----------------- | ------------------------------- | ------------- | ------------------------------------------------ |
-| `hooksPath`       | `string`                        | `"src/hooks"` | Directory path where hooks are added             |
-| `casing`          | `"camelCase"` \| `"kebab-case"` | `"camelCase"` | Naming convention for hook directories and files |
-| `structure`       | `"flat"` \| `"nested"`          | `"flat"`      | Directory structure for hooks                    |
-| `importExtension` | `"none"` \| `"js"` \| `"ts"`    | `"none"`      | File extension used in barrel export imports     |
+| Option            | Type                            | Default       | Description                                                       |
+| ----------------- | ------------------------------- | ------------- | ----------------------------------------------------------------- |
+| `hooksPath`       | `string`                        | `"src/hooks"` | Directory path where hooks are added                              |
+| `casing`          | `"camelCase"` \| `"kebab-case"` | `"camelCase"` | Naming convention for hook directories and files                  |
+| `structure`       | `"flat"` \| `"nested"`          | `"flat"`      | Directory structure for hooks                                     |
+| `importExtension` | `"none"` \| `"js"` \| `"ts"`    | `"none"`      | File extension used in barrel export imports                      |
+| `includeTests`    | `boolean`                       | `false`       | Include test files next to hook implementations when adding hooks |
 
 #### `hooksPath`
 
@@ -259,6 +262,21 @@ Choose based on your TypeScript configuration:
 | `"none"` | `export { useDebounce } from "./useDebounce"`    | `moduleResolution: "bundler"` (Vite, webpack, etc.) |
 | `"js"`   | `export { useDebounce } from "./useDebounce.js"` | `moduleResolution: "nodenext"` or `"node16"`        |
 | `"ts"`   | `export { useDebounce } from "./useDebounce.ts"` | `allowImportingTsExtensions: true` in tsconfig      |
+
+#### `includeTests`
+
+When `true`, airyhooks will also copy the test file for the hook next to the generated hook implementation. The behavior follows the configured `structure`:
+
+- With `"nested"`, the test file is written inside the hook's subdirectory (e.g. `useDebounce/useDebounce.test.ts`).
+- With `"flat"`, the test file is written directly under the `hooksPath` next to the hook file (e.g. `useDebounce.test.ts`).
+
+You can enable this by setting it in `airyhooks.json`:
+
+```json
+{ "includeTests": true }
+```
+
+You can also override this per-command with the CLI flag: `airyhooks add <hook-name> --include-tests`.
 
 ## 📦 Package Managers
 

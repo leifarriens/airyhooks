@@ -325,4 +325,127 @@ describe("add", () => {
       );
     });
   });
+
+  describe("includeTests option", () => {
+    beforeEach(() => {
+      vi.mocked(hookTemplate.getHookTestTemplate).mockReturnValue(
+        "// mock test template content",
+      );
+    });
+
+    it("should write test file when includeTests is true in config with nested structure", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        includeTests: true,
+        structure: "nested",
+      });
+
+      await add("useDebounce");
+
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks/useDebounce", "useDebounce.test.ts"),
+        expect.any(String),
+      );
+    });
+
+    it("should write test file when includeTests is true in config with flat structure", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        includeTests: true,
+        structure: "flat",
+      });
+
+      await add("useDebounce");
+
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        path.join(mockCwd, "src/hooks", "useDebounce.test.ts"),
+        expect.any(String),
+      );
+    });
+
+    it("should log test file in output when includeTests is true with nested structure", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        includeTests: true,
+        structure: "nested",
+      });
+
+      await add("useDebounce");
+
+      const allCalls = getConsoleOutput(consoleSpy);
+      expect(allCalls).toContain("useDebounce.test.ts");
+    });
+
+    it("should log test file in output when includeTests is true with flat structure", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        includeTests: true,
+        structure: "flat",
+      });
+
+      await add("useDebounce");
+
+      const allCalls = getConsoleOutput(consoleSpy);
+      expect(allCalls).toContain("useDebounce.test.ts");
+    });
+
+    it("should pass includeTests override from CLI option to getConfig", async () => {
+      await add("useDebounce", { includeTests: true });
+
+      expect(config.getConfig).toHaveBeenCalledWith(
+        expect.objectContaining({ includeTests: true }),
+      );
+    });
+
+    it("should not write test file when includeTests is false", async () => {
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        includeTests: false,
+      });
+
+      await add("useDebounce");
+
+      const writeFileCalls = vi.mocked(fs.writeFile).mock.calls;
+      const testFileCall = writeFileCalls.find((call) =>
+        String(call[0]).endsWith(".test.ts"),
+      );
+      expect(testFileCall).toBeUndefined();
+    });
+
+    it("should replace import extension in test template with configured importExtension", async () => {
+      vi.mocked(hookTemplate.getHookTestTemplate).mockReturnValue(
+        'import { useDebounce } from "./useDebounce.js";\n\ndescribe("useDebounce", () => {});',
+      );
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        importExtension: "ts",
+        includeTests: true,
+      });
+
+      await add("useDebounce");
+
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        expect.stringContaining("useDebounce.test.ts"),
+        'import { useDebounce } from "./useDebounce.ts";\n\ndescribe("useDebounce", () => {});',
+      );
+    });
+
+    it("should replace import extension in test template with no extension when importExtension is none", async () => {
+      vi.mocked(hookTemplate.getHookTestTemplate).mockReturnValue(
+        'import { useDebounce } from "./useDebounce.js";\n\ndescribe("useDebounce", () => {});',
+      );
+      vi.mocked(config.getConfig).mockResolvedValue({
+        ...config.DEFAULT_CONFIG,
+        importExtension: "none",
+        includeTests: true,
+      });
+
+      await add("useDebounce");
+
+      expect(fs.writeFile).toHaveBeenCalledWith(
+        expect.stringContaining("useDebounce.test.ts"),
+        'import { useDebounce } from "./useDebounce";\n\ndescribe("useDebounce", () => {});',
+      );
+    });
+  });
 });
