@@ -115,6 +115,111 @@ describe("useBoolean", () => {
 });
 `,
 
+  useClickAway: `import { useEffect } from "react";
+
+/**
+ * Detects clicks outside of a target element.
+ *
+ * @param ref - React ref to the target element
+ * @param callback - Function to call when click outside is detected
+ *
+ * @example
+ * const ref = useRef<HTMLDivElement>(null);
+ *
+ * useClickAway(ref, () => {
+ *   setIsOpen(false);
+ * });
+ *
+ * return <div ref={ref}>Content</div>;
+ */
+export function useClickAway<T extends HTMLElement>(
+  ref: React.RefObject<null | T>,
+  callback: () => void,
+): void {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const element = ref.current;
+      if (element && !element.contains(event.target as Node)) {
+        callback();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [ref, callback]);
+}
+`,useClickAway_test: `import { cleanup, fireEvent, render } from "@testing-library/react";
+import React from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { useClickAway } from "./useClickAway.js";
+
+describe("useClickAway", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("should call callback when clicking outside element", () => {
+    const callback = vi.fn();
+    const Component = () => {
+      const ref = React.useRef<HTMLDivElement>(null);
+      useClickAway(ref, callback);
+
+      return (
+        <div>
+          <div data-testid="target" ref={ref}>
+            Target
+          </div>
+          <div data-testid="outside">Outside</div>
+        </div>
+      );
+    };
+
+    const { getByTestId } = render(<Component />);
+
+    fireEvent.mouseDown(getByTestId("outside"));
+    expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not call callback when clicking inside element", () => {
+    const callback = vi.fn();
+    const Component = () => {
+      const ref = React.useRef<HTMLDivElement>(null);
+      useClickAway(ref, callback);
+
+      return (
+        <div data-testid="target" ref={ref}>
+          Target
+        </div>
+      );
+    };
+
+    const { getByTestId } = render(<Component />);
+
+    fireEvent.mouseDown(getByTestId("target"));
+    expect(callback).not.toHaveBeenCalled();
+  });
+
+  it("should cleanup listener on unmount", () => {
+    const callback = vi.fn();
+    const removeSpy = vi.spyOn(document, "removeEventListener");
+
+    const Component = () => {
+      const ref = React.useRef<HTMLDivElement>(null);
+      useClickAway(ref, callback);
+      return <div ref={ref} />;
+    };
+
+    const { unmount } = render(<Component />);
+    unmount();
+
+    expect(removeSpy).toHaveBeenCalledWith("mousedown", expect.any(Function));
+  });
+});
+`,
+
   useCopyToClipboard: `import { useCallback, useState } from "react";
 
 export interface UseCopyToClipboardResult {
@@ -935,6 +1040,275 @@ describe("useDocumentTitle", () => {
 });
 `,
 
+  useEventListener: `import { useEffect, useRef } from "react";
+
+/**
+ * Attaches an event listener to a target element or window with automatic cleanup.
+ *
+ * @param eventName - The event type to listen for (e.g., 'click', 'scroll', 'keydown')
+ * @param handler - The event handler function
+ * @param element - The target element or window (default: window)
+ * @param options - Event listener options (capture, passive, once)
+ *
+ * @example
+ * // Listen for clicks on window
+ * useEventListener('click', (e) => console.log('Clicked!'));
+ *
+ * @example
+ * // Listen for clicks on a specific element
+ * const buttonRef = useRef<HTMLButtonElement>(null);
+ * useEventListener('click', handleClick, buttonRef);
+ *
+ * @example
+ * // With options
+ * useEventListener('scroll', handleScroll, window, { passive: true });
+ */
+export function useEventListener<K extends keyof WindowEventMap>(
+  eventName: K,
+  handler: (event: WindowEventMap[K]) => void,
+  element?: Window,
+  options?: AddEventListenerOptions | boolean,
+): void;
+export function useEventListener<
+  K extends keyof HTMLElementEventMap,
+  T extends HTMLElement = HTMLDivElement,
+>(
+  eventName: K,
+  handler: (event: HTMLElementEventMap[K]) => void,
+  element: React.RefObject<null | T>,
+  options?: AddEventListenerOptions | boolean,
+): void;
+export function useEventListener<K extends keyof DocumentEventMap>(
+  eventName: K,
+  handler: (event: DocumentEventMap[K]) => void,
+  element: Document,
+  options?: AddEventListenerOptions | boolean,
+): void;
+export function useEventListener<
+  KW extends keyof WindowEventMap,
+  KH extends keyof HTMLElementEventMap,
+  KD extends keyof DocumentEventMap,
+  T extends HTMLElement = HTMLElement,
+>(
+  eventName: KD | KH | KW,
+  handler: (
+    event:
+      | DocumentEventMap[KD]
+      | Event
+      | HTMLElementEventMap[KH]
+      | WindowEventMap[KW],
+  ) => void,
+  element?: Document | React.RefObject<null | T> | Window,
+  options?: AddEventListenerOptions | boolean,
+): void {
+  const savedHandler = useRef(handler);
+
+  useEffect(() => {
+    savedHandler.current = handler;
+  }, [handler]);
+
+  useEffect(() => {
+    let targetElement: Document | Element | null | Window;
+
+    if (element === undefined) {
+      targetElement = window;
+    } else if (element instanceof Document || element instanceof Window) {
+      targetElement = element;
+    } else {
+      targetElement = element.current;
+    }
+
+    if (!targetElement?.addEventListener) {
+      return;
+    }
+
+    const eventListener: typeof handler = (event) => {
+      savedHandler.current(event);
+    };
+
+    targetElement.addEventListener(eventName, eventListener, options);
+
+    return () => {
+      targetElement.removeEventListener(eventName, eventListener, options);
+    };
+  }, [eventName, element, options]);
+}
+`,useEventListener_test: `import { cleanup, fireEvent, render } from "@testing-library/react";
+import React from "react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+import { useEventListener } from "./useEventListener.js";
+
+describe("useEventListener", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("should add event listener to window by default", () => {
+    const handler = vi.fn();
+    const addSpy = vi.spyOn(window, "addEventListener");
+
+    const Component = () => {
+      useEventListener("click", handler);
+      return null;
+    };
+
+    render(<Component />);
+
+    expect(addSpy).toHaveBeenCalledWith(
+      "click",
+      expect.any(Function),
+      undefined,
+    );
+    addSpy.mockRestore();
+  });
+
+  it("should call handler when event is fired on window", () => {
+    const handler = vi.fn();
+
+    const Component = () => {
+      useEventListener("click", handler);
+      return null;
+    };
+
+    render(<Component />);
+
+    fireEvent.click(window);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("should add event listener to ref element", () => {
+    const handler = vi.fn();
+
+    const Component = () => {
+      const ref = React.useRef<HTMLButtonElement>(null);
+      useEventListener("click", handler, ref);
+      return <button ref={ref}>Click me</button>;
+    };
+
+    const { getByText } = render(<Component />);
+
+    fireEvent.click(getByText("Click me"));
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not fire handler when clicking outside ref element", () => {
+    const handler = vi.fn();
+
+    const Component = () => {
+      const ref = React.useRef<HTMLButtonElement>(null);
+      useEventListener("click", handler, ref);
+      return (
+        <div>
+          <button ref={ref}>Target</button>
+          <button>Other</button>
+        </div>
+      );
+    };
+
+    const { getByText } = render(<Component />);
+
+    fireEvent.click(getByText("Other"));
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("should add event listener to document", () => {
+    const handler = vi.fn();
+    const addSpy = vi.spyOn(document, "addEventListener");
+
+    const Component = () => {
+      useEventListener("click", handler, document);
+      return null;
+    };
+
+    render(<Component />);
+
+    expect(addSpy).toHaveBeenCalledWith(
+      "click",
+      expect.any(Function),
+      undefined,
+    );
+    addSpy.mockRestore();
+  });
+
+  it("should remove event listener on unmount", () => {
+    const handler = vi.fn();
+    const removeSpy = vi.spyOn(window, "removeEventListener");
+
+    const Component = () => {
+      useEventListener("click", handler);
+      return null;
+    };
+
+    const { unmount } = render(<Component />);
+    unmount();
+
+    expect(removeSpy).toHaveBeenCalledWith(
+      "click",
+      expect.any(Function),
+      undefined,
+    );
+    removeSpy.mockRestore();
+  });
+
+  it("should pass options to event listener", () => {
+    const handler = vi.fn();
+    const addSpy = vi.spyOn(window, "addEventListener");
+    const options = { capture: true, passive: true };
+
+    const Component = () => {
+      useEventListener("scroll", handler, undefined, options);
+      return null;
+    };
+
+    render(<Component />);
+
+    expect(addSpy).toHaveBeenCalledWith(
+      "scroll",
+      expect.any(Function),
+      options,
+    );
+    addSpy.mockRestore();
+  });
+
+  it("should update handler without re-adding listener", () => {
+    const handler1 = vi.fn();
+    const handler2 = vi.fn();
+    const addSpy = vi.spyOn(window, "addEventListener");
+
+    const Component = ({ handler }: { handler: () => void }) => {
+      useEventListener("click", handler);
+      return null;
+    };
+
+    const { rerender } = render(<Component handler={handler1} />);
+    expect(addSpy).toHaveBeenCalledTimes(1);
+
+    rerender(<Component handler={handler2} />);
+
+    fireEvent.click(window);
+    expect(handler1).not.toHaveBeenCalled();
+    expect(handler2).toHaveBeenCalledTimes(1);
+
+    addSpy.mockRestore();
+  });
+
+  it("should handle keydown events", () => {
+    const handler = vi.fn();
+
+    const Component = () => {
+      useEventListener("keydown", handler);
+      return null;
+    };
+
+    render(<Component />);
+
+    fireEvent.keyDown(window, { key: "Enter" });
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
+`,
+
   useFetch: `import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface UseFetchOptions<T> {
@@ -1177,6 +1551,452 @@ describe("useFetch", () => {
 
     expect(result.current.error).toBeNull();
     expect(result.current.data).toEqual(mockData);
+  });
+});
+`,
+
+  useHover: `import { useCallback, useRef, useState } from "react";
+
+/**
+ * Tracks mouse hover state on a DOM element via ref.
+ *
+ * @returns Tuple of [isHovered, ref]
+ *
+ * @example
+ * const [isHovered, ref] = useHover();
+ *
+ * return (
+ *   <div
+ *     ref={ref}
+ *     style={{
+ *       backgroundColor: isHovered ? "blue" : "gray",
+ *     }}
+ *   >
+ *     Hover me!
+ *   </div>
+ * );
+ */
+export function useHover<T extends HTMLElement = HTMLElement>(): [
+  boolean,
+  React.RefObject<T>,
+] {
+  const ref = useRef<T>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
+
+  // Attach event listeners to the ref
+  const setRef = useCallback(
+    (element: null | T) => {
+      if (ref.current) {
+        ref.current.removeEventListener("mouseenter", handleMouseEnter);
+        ref.current.removeEventListener("mouseleave", handleMouseLeave);
+      }
+
+      if (element) {
+        element.addEventListener("mouseenter", handleMouseEnter);
+        element.addEventListener("mouseleave", handleMouseLeave);
+      }
+
+      ref.current = element;
+    },
+    [handleMouseEnter, handleMouseLeave],
+  );
+
+  // Return a proxy ref that updates the internal ref
+  return [
+    isHovered,
+    {
+      get current() {
+        return ref.current;
+      },
+      set current(element: null | T) {
+        setRef(element);
+      },
+    } as React.RefObject<T>,
+  ];
+}
+`,useHover_test: `import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it } from "vitest";
+
+import { useHover } from "./useHover.js";
+
+function TestComponent() {
+  const [isHovered, ref] = useHover<HTMLDivElement>();
+
+  return (
+    <div data-testid="hover-element" ref={ref}>
+      {isHovered ? "Hovering" : "Not hovering"}
+    </div>
+  );
+}
+
+describe("useHover", () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it("should initialize with false", () => {
+    render(<TestComponent />);
+    const element = screen.getByTestId("hover-element");
+    expect(element.textContent).toBe("Not hovering");
+  });
+
+  it("should set to true on mouseenter", () => {
+    render(<TestComponent />);
+    const element = screen.getByTestId("hover-element");
+
+    fireEvent.mouseEnter(element);
+    expect(element.textContent).toBe("Hovering");
+  });
+
+  it("should set to false on mouseleave", () => {
+    render(<TestComponent />);
+    const element = screen.getByTestId("hover-element");
+
+    fireEvent.mouseEnter(element);
+    expect(element.textContent).toBe("Hovering");
+
+    fireEvent.mouseLeave(element);
+    expect(element.textContent).toBe("Not hovering");
+  });
+
+  it("should handle multiple enter/leave cycles", () => {
+    render(<TestComponent />);
+    const element = screen.getByTestId("hover-element");
+
+    fireEvent.mouseEnter(element);
+    expect(element.textContent).toBe("Hovering");
+
+    fireEvent.mouseLeave(element);
+    expect(element.textContent).toBe("Not hovering");
+
+    fireEvent.mouseEnter(element);
+    expect(element.textContent).toBe("Hovering");
+  });
+});
+`,
+
+  useIntersectionObserver: `import { useEffect, useRef, useState } from "react";
+
+export interface UseIntersectionObserverOptions {
+  /** Whether to stop observing after the first intersection (default: false) */
+  once?: boolean;
+  /** The element used as the viewport for checking visibility (default: browser viewport) */
+  root?: Element | null;
+  /** Margin around the root element (e.g., "10px 20px 30px 40px") */
+  rootMargin?: string;
+  /** A number or array of numbers indicating at what percentage of visibility the callback should trigger */
+  threshold?: number | number[];
+}
+
+export interface UseIntersectionObserverResult {
+  /** The current intersection observer entry */
+  entry: IntersectionObserverEntry | null;
+  /** Whether the element is currently intersecting */
+  isIntersecting: boolean;
+  /** Ref to attach to the element to observe */
+  ref: React.RefObject<HTMLElement | null>;
+}
+
+/**
+ * Track the visibility of a DOM element within the viewport using IntersectionObserver.
+ *
+ * @param options - IntersectionObserver configuration options
+ * @returns Object containing ref, entry, and isIntersecting state
+ *
+ * @example
+ * // Basic usage - lazy load an image
+ * const { ref, isIntersecting } = useIntersectionObserver();
+ *
+ * return (
+ *   <div ref={ref}>
+ *     {isIntersecting && <img src="large-image.jpg" />}
+ *   </div>
+ * );
+ *
+ * @example
+ * // Infinite scroll with threshold
+ * const { ref, isIntersecting } = useIntersectionObserver({
+ *   threshold: 0.5,
+ *   rootMargin: '100px',
+ * });
+ *
+ * useEffect(() => {
+ *   if (isIntersecting) loadMoreItems();
+ * }, [isIntersecting]);
+ */
+export function useIntersectionObserver(
+  options: UseIntersectionObserverOptions = {},
+): UseIntersectionObserverResult {
+  const {
+    once = false,
+    root = null,
+    rootMargin = "0px",
+    threshold = 0,
+  } = options;
+
+  const ref = useRef<HTMLElement | null>(null);
+  const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
+  const hasTriggered = useRef(false);
+
+  useEffect(() => {
+    const element = ref.current;
+
+    if (!element || (once && hasTriggered.current)) {
+      return;
+    }
+
+    if (typeof IntersectionObserver === "undefined") {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([observerEntry]) => {
+        if (!observerEntry) {
+          return;
+        }
+
+        setEntry(observerEntry);
+
+        if (once && observerEntry.isIntersecting) {
+          hasTriggered.current = true;
+          observer.disconnect();
+        }
+      },
+      { root, rootMargin, threshold },
+    );
+
+    observer.observe(element);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [root, rootMargin, threshold, once]);
+
+  return {
+    entry,
+    isIntersecting: entry?.isIntersecting ?? false,
+    ref,
+  };
+}
+`,useIntersectionObserver_test: `import { cleanup, render, waitFor } from "@testing-library/react";
+import React from "react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useIntersectionObserver } from "./useIntersectionObserver.js";
+
+describe("useIntersectionObserver", () => {
+  let mockObserve: ReturnType<typeof vi.fn>;
+  let mockDisconnect: ReturnType<typeof vi.fn>;
+  let mockCallback: (entries: IntersectionObserverEntry[]) => void;
+  let mockConstructorOptions: IntersectionObserverInit | undefined;
+
+  beforeEach(() => {
+    mockObserve = vi.fn();
+    mockDisconnect = vi.fn();
+    mockConstructorOptions = undefined;
+
+    vi.stubGlobal(
+      "IntersectionObserver",
+      class MockIntersectionObserver {
+        disconnect = mockDisconnect;
+        observe = mockObserve;
+        unobserve = vi.fn();
+        constructor(
+          callback: (entries: IntersectionObserverEntry[]) => void,
+          options?: IntersectionObserverInit,
+        ) {
+          mockCallback = callback;
+          mockConstructorOptions = options;
+        }
+      },
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("should return ref, entry, and isIntersecting", () => {
+    let hookResult: ReturnType<typeof useIntersectionObserver> | undefined;
+
+    const Component = () => {
+      hookResult = useIntersectionObserver();
+      return (
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
+      );
+    };
+
+    render(<Component />);
+
+    expect(hookResult?.ref).toBeDefined();
+    expect(hookResult?.entry).toBeNull();
+    expect(hookResult?.isIntersecting).toBe(false);
+  });
+
+  it("should observe the element", () => {
+    const Component = () => {
+      const { ref } = useIntersectionObserver();
+      return <div ref={ref as React.RefObject<HTMLDivElement>}>Test</div>;
+    };
+
+    render(<Component />);
+
+    expect(mockObserve).toHaveBeenCalled();
+  });
+
+  it("should update isIntersecting when element becomes visible", async () => {
+    let hookResult: ReturnType<typeof useIntersectionObserver>;
+
+    const Component = () => {
+      hookResult = useIntersectionObserver();
+      return (
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
+      );
+    };
+
+    render(<Component />);
+
+    const mockEntry = {
+      boundingClientRect: {} as DOMRectReadOnly,
+      intersectionRatio: 1,
+      intersectionRect: {} as DOMRectReadOnly,
+      isIntersecting: true,
+      rootBounds: null,
+      target: document.createElement("div"),
+      time: Date.now(),
+    } as IntersectionObserverEntry;
+
+    mockCallback([mockEntry]);
+
+    await waitFor(() => {
+      expect(hookResult.isIntersecting).toBe(true);
+      expect(hookResult.entry).toBe(mockEntry);
+    });
+  });
+
+  it("should disconnect on unmount", () => {
+    const Component = () => {
+      const { ref } = useIntersectionObserver();
+      return <div ref={ref as React.RefObject<HTMLDivElement>}>Test</div>;
+    };
+
+    const { unmount } = render(<Component />);
+    unmount();
+
+    expect(mockDisconnect).toHaveBeenCalled();
+  });
+
+  it("should pass options to IntersectionObserver", () => {
+    const options = {
+      root: null,
+      rootMargin: "10px",
+      threshold: 0.5,
+    };
+
+    const Component = () => {
+      const { ref } = useIntersectionObserver(options);
+      return <div ref={ref as React.RefObject<HTMLDivElement>}>Test</div>;
+    };
+
+    render(<Component />);
+
+    expect(mockConstructorOptions).toEqual({
+      root: null,
+      rootMargin: "10px",
+      threshold: 0.5,
+    });
+  });
+
+  it("should disconnect after first intersection when once is true", async () => {
+    let hookResult: ReturnType<typeof useIntersectionObserver>;
+
+    const Component = () => {
+      hookResult = useIntersectionObserver({ once: true });
+      return (
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
+      );
+    };
+
+    render(<Component />);
+
+    const mockEntry = {
+      isIntersecting: true,
+    } as IntersectionObserverEntry;
+
+    mockCallback([mockEntry]);
+
+    await waitFor(() => {
+      expect(hookResult.isIntersecting).toBe(true);
+    });
+
+    expect(mockDisconnect).toHaveBeenCalled();
+  });
+
+  it("should not disconnect when once is true but not intersecting", async () => {
+    let hookResult: ReturnType<typeof useIntersectionObserver>;
+
+    const Component = () => {
+      hookResult = useIntersectionObserver({ once: true });
+      return (
+        <div ref={hookResult.ref as React.RefObject<HTMLDivElement>}>Test</div>
+      );
+    };
+
+    render(<Component />);
+
+    const mockEntry = {
+      isIntersecting: false,
+    } as IntersectionObserverEntry;
+
+    mockCallback([mockEntry]);
+
+    await waitFor(() => {
+      expect(hookResult.isIntersecting).toBe(false);
+    });
+
+    // Should not disconnect because it hasn't intersected yet
+    expect(mockDisconnect).not.toHaveBeenCalled();
+  });
+
+  it("should handle no element ref gracefully", () => {
+    const Component = () => {
+      const { isIntersecting } = useIntersectionObserver();
+      // Don't attach the ref to any element
+      return (
+        <div>No ref attached, isIntersecting: {String(isIntersecting)}</div>
+      );
+    };
+
+    render(<Component />);
+
+    // Should not observe anything since ref is not attached
+    expect(mockObserve).not.toHaveBeenCalled();
+  });
+
+  it("should handle IntersectionObserver being undefined (SSR)", () => {
+    vi.stubGlobal("IntersectionObserver", undefined);
+
+    const Component = () => {
+      const { isIntersecting, ref } = useIntersectionObserver();
+      return (
+        <div ref={ref as React.RefObject<HTMLDivElement>}>
+          SSR: {String(isIntersecting)}
+        </div>
+      );
+    };
+
+    // Should not throw
+    render(<Component />);
+    expect(mockObserve).not.toHaveBeenCalled();
   });
 });
 `,
@@ -1938,6 +2758,326 @@ describe("useLockBodyScroll", () => {
 
     unmount();
     expect(document.body.style.overflow).toBe("scroll");
+  });
+});
+`,
+
+  useMeasure: `import { useCallback, useEffect, useRef, useState } from "react";
+
+export interface UseMeasureRect {
+  /** Bottom position relative to viewport */
+  bottom: number;
+  /** Element height */
+  height: number;
+  /** Left position relative to viewport */
+  left: number;
+  /** Right position relative to viewport */
+  right: number;
+  /** Top position relative to viewport */
+  top: number;
+  /** Element width */
+  width: number;
+  /** X position (same as left) */
+  x: number;
+  /** Y position (same as top) */
+  y: number;
+}
+
+export interface UseMeasureResult<T extends Element> {
+  /** The measured dimensions of the element */
+  rect: UseMeasureRect;
+  /** Ref to attach to the element to measure */
+  ref: React.RefCallback<T>;
+}
+
+const defaultRect: UseMeasureRect = {
+  bottom: 0,
+  height: 0,
+  left: 0,
+  right: 0,
+  top: 0,
+  width: 0,
+  x: 0,
+  y: 0,
+};
+
+/**
+ * Measure the dimensions of a DOM element using ResizeObserver.
+ *
+ * @returns Object containing ref callback and rect measurements
+ *
+ * @example
+ * const { ref, rect } = useMeasure<HTMLDivElement>();
+ *
+ * return (
+ *   <div ref={ref}>
+ *     <p>Width: {rect.width}px</p>
+ *     <p>Height: {rect.height}px</p>
+ *   </div>
+ * );
+ *
+ * @example
+ * // Responsive component
+ * const { ref, rect } = useMeasure<HTMLDivElement>();
+ * const isCompact = rect.width < 400;
+ *
+ * return (
+ *   <nav ref={ref} className={isCompact ? 'compact' : 'full'}>
+ *     {isCompact ? <MobileMenu /> : <DesktopMenu />}
+ *   </nav>
+ * );
+ */
+export function useMeasure<
+  T extends Element = HTMLDivElement,
+>(): UseMeasureResult<T> {
+  const [element, setElement] = useState<null | T>(null);
+  const [rect, setRect] = useState<UseMeasureRect>(defaultRect);
+
+  const observerRef = useRef<null | ResizeObserver>(null);
+
+  const ref = useCallback((node: null | T) => {
+    setElement(node);
+  }, []);
+
+  useEffect(() => {
+    if (!element) {
+      return;
+    }
+
+    if (typeof ResizeObserver === "undefined") {
+      // Fallback: get initial dimensions without observing changes
+      const boundingRect = element.getBoundingClientRect();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRect({
+        bottom: boundingRect.bottom,
+        height: boundingRect.height,
+        left: boundingRect.left,
+        right: boundingRect.right,
+        top: boundingRect.top,
+        width: boundingRect.width,
+        x: boundingRect.x,
+        y: boundingRect.y,
+      });
+      return;
+    }
+
+    observerRef.current = new ResizeObserver(([entry]) => {
+      if (entry) {
+        const boundingRect = entry.target.getBoundingClientRect();
+        setRect({
+          bottom: boundingRect.bottom,
+          height: boundingRect.height,
+          left: boundingRect.left,
+          right: boundingRect.right,
+          top: boundingRect.top,
+          width: boundingRect.width,
+          x: boundingRect.x,
+          y: boundingRect.y,
+        });
+      }
+    });
+
+    observerRef.current.observe(element);
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [element]);
+
+  return { rect, ref };
+}
+`,useMeasure_test: `import { cleanup, render, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { useMeasure } from "./useMeasure.js";
+
+describe("useMeasure", () => {
+  let mockObserve: ReturnType<typeof vi.fn>;
+  let mockDisconnect: ReturnType<typeof vi.fn>;
+  let mockCallback: (entries: ResizeObserverEntry[]) => void;
+
+  const mockBoundingRect = {
+    bottom: 200,
+    height: 100,
+    left: 50,
+    right: 250,
+    top: 100,
+    width: 200,
+    x: 50,
+    y: 100,
+  };
+
+  beforeEach(() => {
+    mockObserve = vi.fn();
+    mockDisconnect = vi.fn();
+
+    vi.stubGlobal(
+      "ResizeObserver",
+      class MockResizeObserver {
+        disconnect = mockDisconnect;
+        observe = mockObserve;
+        unobserve = vi.fn();
+        constructor(callback: (entries: ResizeObserverEntry[]) => void) {
+          mockCallback = callback;
+        }
+      },
+    );
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.unstubAllGlobals();
+  });
+
+  it("should return ref and initial rect with zeros", () => {
+    let result: ReturnType<typeof useMeasure> | undefined;
+
+    const Component = () => {
+      result = useMeasure();
+      return <div ref={result.ref}>Test</div>;
+    };
+
+    render(<Component />);
+
+    expect(typeof result?.ref).toBe("function");
+    expect(result?.rect).toEqual({
+      bottom: 0,
+      height: 0,
+      left: 0,
+      right: 0,
+      top: 0,
+      width: 0,
+      x: 0,
+      y: 0,
+    });
+  });
+
+  it("should observe the element", () => {
+    const Component = () => {
+      const { ref } = useMeasure();
+      return <div ref={ref}>Test</div>;
+    };
+
+    render(<Component />);
+
+    expect(mockObserve).toHaveBeenCalled();
+  });
+
+  it("should update rect when element is resized", async () => {
+    let result: ReturnType<typeof useMeasure> | undefined;
+
+    const Component = () => {
+      result = useMeasure();
+      return <div ref={result.ref}>Test</div>;
+    };
+
+    render(<Component />);
+
+    const mockEntry = {
+      target: {
+        getBoundingClientRect: () => mockBoundingRect,
+      },
+    } as unknown as ResizeObserverEntry;
+
+    mockCallback([mockEntry]);
+
+    await waitFor(() => {
+      expect(result?.rect).toEqual(mockBoundingRect);
+    });
+  });
+
+  it("should disconnect on unmount", () => {
+    const Component = () => {
+      const { ref } = useMeasure();
+      return <div ref={ref}>Test</div>;
+    };
+
+    const { unmount } = render(<Component />);
+    unmount();
+
+    expect(mockDisconnect).toHaveBeenCalled();
+  });
+
+  it("should handle null ref", () => {
+    let result: ReturnType<typeof useMeasure>;
+
+    const Component = ({ show }: { show: boolean }) => {
+      result = useMeasure();
+      return show ? <div ref={result.ref}>Test</div> : null;
+    };
+
+    const { rerender } = render(<Component show={true} />);
+
+    expect(mockObserve).toHaveBeenCalledTimes(1);
+
+    rerender(<Component show={false} />);
+
+    // Observer should be disconnected when element is removed
+    expect(mockDisconnect).toHaveBeenCalled();
+  });
+
+  it("should re-observe when element changes", async () => {
+    let result: ReturnType<typeof useMeasure>;
+
+    const Component = ({ id }: { id: string }) => {
+      result = useMeasure();
+      return (
+        <div key={id} ref={result.ref}>
+          {id}
+        </div>
+      );
+    };
+
+    const { rerender } = render(<Component id="first" />);
+
+    expect(mockObserve).toHaveBeenCalledTimes(1);
+
+    rerender(<Component id="second" />);
+
+    await waitFor(() => {
+      expect(mockObserve).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it("should fallback to getBoundingClientRect when ResizeObserver is undefined", () => {
+    vi.stubGlobal("ResizeObserver", undefined);
+
+    const mockRect = {
+      bottom: 100,
+      height: 50,
+      left: 10,
+      right: 110,
+      top: 50,
+      width: 100,
+      x: 10,
+      y: 50,
+    };
+
+    let result: ReturnType<typeof useMeasure> | undefined;
+
+    const Component = () => {
+      result = useMeasure();
+      return (
+        <div
+          ref={(node) => {
+            if (node) {
+              vi.spyOn(node, "getBoundingClientRect").mockReturnValue(
+                mockRect as DOMRect,
+              );
+            }
+            result?.ref(node);
+          }}
+        >
+          Test
+        </div>
+      );
+    };
+
+    render(<Component />);
+
+    // Should have initial rect from getBoundingClientRect fallback
+    expect(result?.rect.width).toBe(100);
+    expect(result?.rect.height).toBe(50);
   });
 });
 `,

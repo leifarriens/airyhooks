@@ -51,27 +51,17 @@ function readHookTemplates(): HookTemplate[] {
     .map((dirent) => dirent.name);
 
   for (const hookDir of hookDirs) {
-    const hookFile = path.join(HOOKS_SRC_DIR, hookDir, `${hookDir}.ts`);
-    const hookTestFile = path.join(
-      HOOKS_SRC_DIR,
-      hookDir,
-      `${hookDir}.test.ts`,
-    );
-
-    if (!fs.existsSync(hookFile)) {
-      console.warn(`Warning: Expected file not found: ${hookFile}`);
-      continue;
-    }
-
-    if (!fs.existsSync(hookTestFile)) {
-      console.warn(`Warning: Expected test file not found: ${hookTestFile}`);
-      continue;
-    }
-
-    const content = fs.readFileSync(hookFile, "utf-8");
+    const content = readSourceFile(path.join(HOOKS_SRC_DIR, hookDir), hookDir, [
+      "ts",
+      "tsx",
+    ]);
     const exportedFunctions = extractExportedFunctions(content);
 
-    const test = fs.readFileSync(hookTestFile, "utf-8");
+    const test = readSourceFile(
+      path.join(HOOKS_SRC_DIR, hookDir),
+      `${hookDir}.test`,
+      ["ts", "tsx"],
+    );
 
     // Each exported function becomes a template entry, all pointing to same content
     for (const funcName of exportedFunctions) {
@@ -87,6 +77,18 @@ function readHookTemplates(): HookTemplate[] {
   templates.sort((a, b) => a.name.localeCompare(b.name));
 
   return templates;
+}
+
+function readSourceFile(dir: string, baseName: string, extension: string[]) {
+  for (const ext of extension) {
+    const filePath = path.join(dir, `${baseName}.${ext}`);
+    if (fs.existsSync(filePath)) {
+      return fs.readFileSync(filePath, "utf-8");
+    }
+  }
+  throw new Error(
+    `File not found: ${baseName} with extensions ${extension.join(", ")}`,
+  );
 }
 
 /**
