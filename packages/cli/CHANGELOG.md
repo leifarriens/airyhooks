@@ -1,5 +1,16 @@
 # airyhooks
 
+## 0.4.0
+
+### Minor Changes
+
+- e56b45b: Added `--path` flag to overwrite target dir
+  Added `--debug` flag to enable debug logging
+
+### Patch Changes
+
+- 1f91974: refactor: use valibot for arg validation
+
 ## 0.3.1
 
 ### Patch Changes
