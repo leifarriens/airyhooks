@@ -213,6 +213,29 @@ describe("add", () => {
     expect(allCalls).toContain("// mock template content");
   });
 
+  it("should output debug information when debug option is true", async () => {
+    const debugSpy = vi
+      .spyOn(console, "debug")
+      .mockImplementation(() => undefined);
+
+    await add("useDebounce", { debug: true });
+
+    expect(debugSpy).toHaveBeenCalledWith("Parsed command options:");
+    expect(debugSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ debug: true }),
+    );
+    expect(debugSpy).toHaveBeenCalledWith("Resolved configuration:");
+    expect(debugSpy).toHaveBeenCalledWith(config.DEFAULT_CONFIG);
+  });
+
+  it("should pass path override from CLI option to getConfig", async () => {
+    await add("useDebounce", { path: "lib/custom" });
+
+    expect(config.getConfig).toHaveBeenCalledWith(
+      expect.objectContaining({ hooksPath: "lib/custom" }),
+    );
+  });
+
   it("should not create directory when raw flag is true", async () => {
     await add("useDebounce", { raw: true });
 

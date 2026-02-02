@@ -2,12 +2,13 @@
 import { Command, Option } from "commander";
 
 import packageJson from "../package.json" with { type: "json" };
-import { add } from "./commands/add.js";
+import { add, type AddOptions } from "./commands/add.js";
 import { entry } from "./commands/entry.js";
 import { init } from "./commands/init.js";
 import { list } from "./commands/list.js";
 
-const options = {
+const options: Record<keyof AddOptions, Option> = {
+  debug: new Option("--debug", "Enable debug logging").default(false),
   force: new Option(
     "-f, --force",
     "Force overwrite if the hook file already exists",
@@ -20,6 +21,10 @@ const options = {
     "-k, --kebab",
     "Use kebab-case for the hook file and directory names. Overrides the default casing in config.",
   ).default(false),
+  path: new Option(
+    "-p, --path <directory>",
+    "Specify the target directory to add hooks into. Overrides the default hooksPath in config.",
+  ),
   raw: new Option(
     "-r, --raw",
     "Output only the raw hook template to console",
@@ -34,12 +39,14 @@ program
   .version(packageJson.version, "-v, --version");
 
 program // runs when no sub-command is provided
-  .command("add-default", { isDefault: true })
+  .command("search", { isDefault: true })
   .description("Add React hooks to your project")
-  .addOption(options.raw)
+  .addOption(options.debug)
   .addOption(options.force)
   .addOption(options.includeTests)
   .addOption(options.kebab)
+  .addOption(options.path)
+  .addOption(options.raw)
   .action(entry);
 
 program
@@ -51,10 +58,12 @@ program
   .command("add")
   .description("Add a hook to your project")
   .argument("<hook>", "Name of the hook to add (e.g., useDebounce)")
-  .addOption(options.raw)
+  .addOption(options.debug)
   .addOption(options.force)
   .addOption(options.includeTests)
   .addOption(options.kebab)
+  .addOption(options.path)
+  .addOption(options.raw)
   .action(add);
 
 program.command("list").description("List all available hooks").action(list);

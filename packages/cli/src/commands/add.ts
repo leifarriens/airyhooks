@@ -15,9 +15,11 @@ import { parseCommandOptions } from "../utils/parse-command-options.js";
 import { registry } from "../utils/registry.js";
 
 export const AddOptionsSchema = v.object({
+  debug: v.optional(v.boolean()),
   force: v.optional(v.boolean()),
   includeTests: v.optional(v.boolean()),
   kebab: v.optional(v.boolean()),
+  path: v.optional(v.string()),
   raw: v.optional(v.boolean()),
 });
 
@@ -32,6 +34,11 @@ interface LogOutputOptions extends AiryhooksConfig {
 export async function add(hookName: string, commandOptions: AddOptions = {}) {
   const options = parseCommandOptions(AddOptionsSchema, commandOptions);
 
+  if (commandOptions.debug) {
+    console.debug("Parsed command options:");
+    console.debug(commandOptions);
+  }
+
   const hook = registry.find(
     (h) => h.name.toLowerCase() === hookName.toLowerCase(),
   );
@@ -45,7 +52,13 @@ export async function add(hookName: string, commandOptions: AddOptions = {}) {
   const config = await getConfig({
     ...(options.kebab ? { casing: "kebab-case" } : {}),
     ...(options.includeTests ? { includeTests: true } : {}),
+    ...(options.path ? { hooksPath: options.path } : {}),
   });
+
+  if (commandOptions.debug) {
+    console.debug("Resolved configuration:");
+    console.debug(config);
+  }
 
   const hooksDir = path.join(process.cwd(), config.hooksPath);
   const casedHookName = getHookFileBaseName(hook.name, config.casing);
