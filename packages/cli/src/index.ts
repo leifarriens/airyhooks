@@ -31,12 +31,16 @@ const program = new Command();
 program
   .name("airyhooks")
   .description("Add React hooks to your project")
-  .action(entry)
+  .version(packageJson.version, "-v, --version");
+
+program // runs when no sub-command is provided
+  .command("add-default", { isDefault: true })
+  .description("Add React hooks to your project")
   .addOption(options.raw)
   .addOption(options.force)
   .addOption(options.includeTests)
   .addOption(options.kebab)
-  .version(packageJson.version, "-v, --version");
+  .action(entry);
 
 program
   .command("init")
