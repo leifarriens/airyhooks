@@ -27,7 +27,7 @@ pnpm install
 pnpm turbo build
 ```
 
-## 🧪 Development & Testing
+## Development & Testing
 
 ### Running Tests
 
@@ -66,7 +66,7 @@ node dist/index.js list
 node dist/index.js add useDebounce
 ```
 
-## 🏗️ Project Structure
+## Project Structure
 
 ```
 airyhooks/
@@ -85,7 +85,7 @@ airyhooks/
 └── turbo.json              # Turborepo pipeline
 ```
 
-## ✅ Quality Checks
+## Quality Checks
 
 Verify the project with Turbo caching:
 
@@ -98,7 +98,7 @@ pnpm --filter @airyhooks/hooks test
 pnpm --filter airyhooks lint
 ```
 
-## 🔧 Development Workflow
+## Development Workflow
 
 ### Adding a New Hook
 
@@ -140,7 +140,7 @@ pnpm --filter @airyhooks/hooks build:templates
 3. **File Creation**: Hook and barrel export are written to your project
 4. **Usage**: Import directly from your local hooks directory
 
-## 🤝 Contributing
+## Contributing
 
 ### Contributing Workflow
 

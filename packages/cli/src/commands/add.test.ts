@@ -2,6 +2,7 @@ import type { MockInstance } from "vitest";
 
 import fs from "fs-extra";
 import path from "node:path";
+import prompts from "prompts";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { HookDefinition } from "../utils/registry.js";
@@ -12,6 +13,7 @@ import * as registryModule from "../utils/registry.js";
 import { add } from "./add.js";
 
 vi.mock("fs-extra");
+vi.mock("prompts");
 vi.mock("../utils/config.js");
 vi.mock("../utils/get-hook-template.js");
 vi.mock("../utils/registry.js");
@@ -55,6 +57,7 @@ describe("add", () => {
     vi.mocked(fs.ensureDir).mockResolvedValue(undefined);
     vi.mocked(fs.pathExists).mockResolvedValue(false as never);
     vi.mocked(fs.writeFile).mockResolvedValue(undefined);
+    vi.mocked(prompts).mockResolvedValue({ overwrite: true });
   });
 
   afterEach(() => {
@@ -85,14 +88,35 @@ describe("add", () => {
     );
   });
 
-  it("should skip if hook already exists", async () => {
+  it("should prompt for overwrite when hook already exists", async () => {
     vi.mocked(fs.pathExists).mockResolvedValue(true as never);
+    vi.mocked(prompts).mockResolvedValue({ overwrite: false });
 
     await add("useDebounce");
 
+    expect(prompts).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Overwrite existing hook?",
+        name: "overwrite",
+        type: "confirm",
+      }),
+    );
     const allCalls = getConsoleOutput(consoleSpy);
     expect(allCalls).toContain("already exists");
+    expect(allCalls).toContain('Use "--force" to overwrite existing hooks.');
     expect(fs.writeFile).not.toHaveBeenCalled();
+  });
+
+  it("should overwrite when user confirms via prompt", async () => {
+    vi.mocked(fs.pathExists).mockResolvedValue(true as never);
+    vi.mocked(prompts).mockResolvedValue({ overwrite: true });
+
+    await add("useDebounce");
+
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      path.join(mockCwd, "src/hooks/useDebounce", "useDebounce.ts"),
+      "// mock template content",
+    );
   });
 
   it("should write hook file", async () => {

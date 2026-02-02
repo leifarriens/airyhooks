@@ -5,20 +5,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { HookDefinition } from "../utils/registry.js";
 
+import * as configModule from "../utils/config.js";
+import * as parseCommandOptionsModule from "../utils/parse-command-options.js";
 import * as registryModule from "../utils/registry.js";
 import * as addModule from "./add.js";
 import { entry } from "./entry.js";
 
 vi.mock("prompts");
+vi.mock("../utils/config.js");
+vi.mock("../utils/parse-command-options.js");
 vi.mock("../utils/registry.js");
 vi.mock("./add.js");
 
 describe("entry", () => {
   let addSpy: MockInstance;
+  let consoleSpy: MockInstance<(message?: unknown) => void>;
 
   beforeEach(() => {
     vi.clearAllMocks();
+    consoleSpy = vi.spyOn(console, "log").mockImplementation(() => undefined);
     addSpy = vi.mocked(addModule.add).mockResolvedValue(undefined);
+    vi.mocked(configModule.getConfigPath).mockReturnValue(
+      "/test/airyhooks.json",
+    );
+    vi.mocked(parseCommandOptionsModule.parseCommandOptions).mockImplementation(
+      (_schema, opts) => opts as Record<string, unknown>,
+    );
     vi.mocked(registryModule).registry = [
       {
         description: "Debounce a value with a specified delay",
@@ -62,12 +74,12 @@ describe("entry", () => {
     );
   });
 
-  it("should call add with selected hook name", async () => {
+  it("should call add with selected hook name and options", async () => {
     vi.mocked(prompts).mockResolvedValue({ hookName: "useDebounce" });
 
     await entry();
 
-    expect(addSpy).toHaveBeenCalledWith("useDebounce");
+    expect(addSpy).toHaveBeenCalledWith("useDebounce", {});
   });
 
   it("should not call add when user cancels selection", async () => {
@@ -134,5 +146,45 @@ describe("entry", () => {
       { title: "useBeta" },
       { title: "useZoom" },
     ]);
+  });
+
+  it("should show warning when no config file exists", async () => {
+    vi.mocked(configModule.getConfigPath).mockReturnValue(null);
+    vi.mocked(prompts).mockResolvedValue({ hookName: "useDebounce" });
+
+    await entry();
+
+    const allCalls = consoleSpy.mock.calls
+      .map((call) => String(call[0]))
+      .join("\n");
+    expect(allCalls).toContain("No airyhooks.json configuration file found");
+    expect(allCalls).toContain("airyhooks init");
+  });
+
+  it("should not show warning when config file exists", async () => {
+    vi.mocked(configModule.getConfigPath).mockReturnValue(
+      "/test/airyhooks.json",
+    );
+    vi.mocked(prompts).mockResolvedValue({ hookName: "useDebounce" });
+
+    await entry();
+
+    const allCalls = consoleSpy.mock.calls
+      .map((call) => String(call[0]))
+      .join("\n");
+    expect(allCalls).not.toContain(
+      "No airyhooks.json configuration file found",
+    );
+  });
+
+  it("should pass options through to add command", async () => {
+    vi.mocked(prompts).mockResolvedValue({ hookName: "useDebounce" });
+
+    await entry({ force: true, kebab: true });
+
+    expect(addSpy).toHaveBeenCalledWith("useDebounce", {
+      force: true,
+      kebab: true,
+    });
   });
 });

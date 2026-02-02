@@ -10,7 +10,7 @@ Add production-ready zero-dependency React hooks without package installation di
 pnpm dlx airyhooks
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Initialize
 
@@ -20,10 +20,10 @@ Create the configuration file and set your hooks directory:
 pnpm dlx airyhooks init
 ```
 
-This creates `airyhooks.json` in your project root and prompts you for the hooks directory path (default: `./hooks`).
+This creates `airyhooks.json` in your project root and prompts you for the hooks directory path (default: `src/hooks`).
 
 > [!NOTE]  
-> You can use `airyhooks` without initialization. It will use the [default configuration](#-configuration).
+> You can use `airyhooks` without initialization. It will use the [default configuration](#configuration).
 
 ### 2. Start Adding Hooks
 
@@ -68,7 +68,7 @@ export function SearchComponent() {
 }
 ```
 
-## 📚 Available Hooks
+## Available Hooks
 
 | Hook                      | Description                                             |
 | ------------------------- | ------------------------------------------------------- |
@@ -100,7 +100,7 @@ export function SearchComponent() {
 | `useUnmount`              | Call a callback on component unmount                    |
 | `useWindowSize`           | Track window dimensions                                 |
 
-## 📖 Commands
+## Commands
 
 ### `airyhooks init`
 
@@ -149,7 +149,7 @@ List all available hooks with descriptions.
 pnpm dlx airyhooks list
 ```
 
-## 💡 Usage Example
+## Usage Example
 
 Here's a complete example using `useDebounce` for a search input:
 
@@ -174,7 +174,7 @@ export function App() {
 }
 ```
 
-## ⚙️ Configuration
+## Configuration
 
 The `airyhooks.json` file stores your configuration:
 
@@ -278,7 +278,7 @@ You can enable this by setting it in `airyhooks.json`:
 
 You can also override this per-command with the CLI flag: `airyhooks add <hook-name> --include-tests`.
 
-## 📦 Package Managers
+## Package Managers
 
 airyhooks works with all major package managers:
 

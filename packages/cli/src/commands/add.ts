@@ -1,6 +1,8 @@
 import fs from "fs-extra";
 import path from "node:path";
 import pc from "picocolors";
+import prompts from "prompts";
+import * as v from "valibot";
 
 import { type AiryhooksConfig, getConfig } from "../utils/config.js";
 import { getFileExtension } from "../utils/get-file-extension.js";
@@ -9,14 +11,17 @@ import {
   getHookTemplate,
   getHookTestTemplate,
 } from "../utils/get-hook-template.js";
+import { parseCommandOptions } from "../utils/parse-command-options.js";
 import { registry } from "../utils/registry.js";
 
-interface AddOptions {
-  force?: boolean;
-  includeTests?: boolean;
-  kebab?: boolean;
-  raw?: boolean;
-}
+export const AddOptionsSchema = v.object({
+  force: v.optional(v.boolean()),
+  includeTests: v.optional(v.boolean()),
+  kebab: v.optional(v.boolean()),
+  raw: v.optional(v.boolean()),
+});
+
+export type AddOptions = v.InferOutput<typeof AddOptionsSchema>;
 
 interface LogOutputOptions extends AiryhooksConfig {
   casedHookName: string;
@@ -24,8 +29,8 @@ interface LogOutputOptions extends AiryhooksConfig {
   hookTargetDir: string;
 }
 
-export async function add(hookName: string, options: AddOptions = {}) {
-  const { force, kebab, raw } = options;
+export async function add(hookName: string, commandOptions: AddOptions = {}) {
+  const options = parseCommandOptions(AddOptionsSchema, commandOptions);
 
   const hook = registry.find(
     (h) => h.name.toLowerCase() === hookName.toLowerCase(),
@@ -38,7 +43,7 @@ export async function add(hookName: string, options: AddOptions = {}) {
   }
 
   const config = await getConfig({
-    ...(kebab ? { casing: "kebab-case" } : {}),
+    ...(options.kebab ? { casing: "kebab-case" } : {}),
     ...(options.includeTests ? { includeTests: true } : {}),
   });
 
@@ -52,7 +57,7 @@ export async function add(hookName: string, options: AddOptions = {}) {
   const template = getHookTemplate(hook.name);
   const testTemplate = getHookTestTemplate(hook.name);
 
-  if (!raw) {
+  if (!options.raw) {
     // Ensure hook subdirectory exists
     await fs.ensureDir(hookTargetDir);
 
@@ -63,10 +68,19 @@ export async function add(hookName: string, options: AddOptions = {}) {
     );
 
     // Check if hook already exists
-    if (!force && (await fs.pathExists(hookFilePath))) {
-      console.log(pc.yellow(`⚠ ${casedHookName} already exists. Skipping.`));
-      console.log(pc.dim("Use --force to overwrite existing hooks."));
-      return;
+    if (!options.force && (await fs.pathExists(hookFilePath))) {
+      console.log(pc.yellow(`⚠ ${casedHookName} already exists.`));
+
+      const response = await prompts({
+        message: "Overwrite existing hook?",
+        name: "overwrite",
+        type: "confirm",
+      });
+
+      if (!response.overwrite) {
+        console.log(pc.dim(`Use "--force" to overwrite existing hooks.`));
+        return;
+      }
     }
 
     const barrelFilePath = path.join(hookTargetDir, "index.ts");

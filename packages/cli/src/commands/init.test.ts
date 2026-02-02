@@ -19,6 +19,7 @@ function getConsoleOutput(
 const defaultPromptsResolveMock = {
   casing: "camelCase",
   hooksPath: "src/hooks",
+  includeTests: false,
 };
 
 describe("init", () => {
@@ -53,7 +54,7 @@ describe("init", () => {
     );
   });
 
-  it("should create config file with user-specified path", async () => {
+  it("should create config file with user-specified options", async () => {
     vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
 
     await init();
@@ -63,9 +64,7 @@ describe("init", () => {
       {
         casing: "camelCase",
         hooksPath: "src/hooks",
-        importExtension: "none",
         includeTests: false,
-        structure: "nested",
       },
       { spaces: 2 },
     );
@@ -147,5 +146,48 @@ describe("init", () => {
         }),
       ]),
     );
+  });
+
+  it("should prompt for includeTests option", async () => {
+    vi.mocked(prompts).mockResolvedValue(defaultPromptsResolveMock);
+
+    await init();
+
+    expect(prompts).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          message: "Would you like to include test files for your hooks?",
+          name: "includeTests",
+          type: "toggle",
+        }),
+      ]),
+    );
+  });
+
+  it("should cancel when user provides no casing", async () => {
+    vi.mocked(prompts).mockResolvedValue({
+      ...defaultPromptsResolveMock,
+      casing: undefined,
+    });
+
+    await init();
+
+    expect(fs.writeJson).not.toHaveBeenCalled();
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).toContain("cancelled");
+  });
+
+  it("should cancel when user provides no includeTests", async () => {
+    vi.mocked(prompts).mockResolvedValue({
+      casing: "camelCase",
+      hooksPath: "src/hooks",
+      includeTests: undefined,
+    });
+
+    await init();
+
+    expect(fs.writeJson).not.toHaveBeenCalled();
+    const allCalls = getConsoleOutput(consoleSpy);
+    expect(allCalls).toContain("cancelled");
   });
 });
