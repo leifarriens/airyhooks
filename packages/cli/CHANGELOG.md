@@ -1,5 +1,11 @@
 # airyhooks
 
+## 0.4.1
+
+### Patch Changes
+
+- ec9b5d6: fix: testfile hook import path
+
 ## 0.4.0
 
 ### Minor Changes
