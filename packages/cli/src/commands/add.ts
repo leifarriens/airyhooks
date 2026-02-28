@@ -107,7 +107,7 @@ export async function add(hookName: string, commandOptions: AddOptions = {}) {
       const hookImplementationImportPath = `./${hookName}.js`;
       const modifiedTestTemplate = testTemplate.replace(
         hookImplementationImportPath,
-        `./${hook.name}${hookImportExtension}`,
+        `./${casedHookName}${hookImportExtension}`,
       );
       await fs.writeFile(hookTestFilePath, modifiedTestTemplate);
     }
