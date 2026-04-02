@@ -15,7 +15,7 @@ import { useState } from "react";
  * }, [count, prevCount]);
  */
 export function usePrevious<T>(value: T): T | undefined {
-  const [current, setCurrent] = useState<T>(value);
+  const [current, setCurrent] = useState(value);
   const [previous, setPrevious] = useState<T | undefined>(undefined);
 
   if (current !== value) {

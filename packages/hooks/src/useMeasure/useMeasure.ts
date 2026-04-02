@@ -67,7 +67,7 @@ export function useMeasure<
   T extends Element = HTMLDivElement,
 >(): UseMeasureResult<T> {
   const [element, setElement] = useState<null | T>(null);
-  const [rect, setRect] = useState<UseMeasureRect>(defaultRect);
+  const [rect, setRect] = useState(defaultRect);
 
   const observerRef = useRef<null | ResizeObserver>(null);
 

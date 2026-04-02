@@ -45,7 +45,7 @@ export function useFetch<T>(
 ): UseFetchResult<T> {
   const { immediate = true, initialData } = options;
 
-  const [data, setData] = useState<T | undefined>(initialData);
+  const [data, setData] = useState(initialData);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(immediate);
 

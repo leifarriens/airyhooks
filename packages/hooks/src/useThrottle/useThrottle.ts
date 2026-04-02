@@ -17,9 +17,9 @@ import { useEffect, useRef, useState } from "react";
  * }, [throttledPosition]);
  */
 export function useThrottle<T>(value: T, interval = 500): T {
-  const [throttledValue, setThrottledValue] = useState<T>(value);
+  const [throttledValue, setThrottledValue] = useState(value);
   // eslint-disable-next-line react-hooks/purity
-  const lastUpdated = useRef<number>(Date.now());
+  const lastUpdated = useRef(Date.now());
 
   useEffect(() => {
     const now = Date.now();

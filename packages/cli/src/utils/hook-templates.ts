@@ -405,7 +405,7 @@ export function useCounter(initialValue = 0): [
     set: (value: ((prev: number) => number) | number) => void;
   },
 ] {
-  const [count, setCount] = useState<number>(initialValue);
+  const [count, setCount] = useState(initialValue);
 
   const increment = useCallback((amount = 1) => {
     setCount((prev) => prev + amount);
@@ -552,7 +552,7 @@ describe("useCounter", () => {
  * }, [debouncedSearch]);
  */
 export function useDebounce<T>(value: T, delay = 500): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1356,7 +1356,7 @@ export function useFetch<T>(
 ): UseFetchResult<T> {
   const { immediate = true, initialData } = options;
 
-  const [data, setData] = useState<T | undefined>(initialData);
+  const [data, setData] = useState(initialData);
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(immediate);
 
@@ -2831,7 +2831,7 @@ export function useMeasure<
   T extends Element = HTMLDivElement,
 >(): UseMeasureResult<T> {
   const [element, setElement] = useState<null | T>(null);
-  const [rect, setRect] = useState<UseMeasureRect>(defaultRect);
+  const [rect, setRect] = useState(defaultRect);
 
   const observerRef = useRef<null | ResizeObserver>(null);
 
@@ -3346,7 +3346,7 @@ describe("useMount", () => {
  * }, [count, prevCount]);
  */
 export function usePrevious<T>(value: T): T | undefined {
-  const [current, setCurrent] = useState<T>(value);
+  const [current, setCurrent] = useState(value);
   const [previous, setPrevious] = useState<T | undefined>(undefined);
 
   if (current !== value) {
@@ -3423,7 +3423,7 @@ interface ScrollPosition {
 export function useScroll(
   ref?: React.RefObject<HTMLElement | null>,
 ): ScrollPosition {
-  const [scroll, setScroll] = useState<ScrollPosition>({ x: 0, y: 0 });
+  const [scroll, setScroll] = useState({ x: 0, y: 0 });
 
   const handleScroll = useCallback(() => {
     if (ref?.current) {
@@ -3694,9 +3694,9 @@ describe("useSessionStorage", () => {
  * }, [throttledPosition]);
  */
 export function useThrottle<T>(value: T, interval = 500): T {
-  const [throttledValue, setThrottledValue] = useState<T>(value);
+  const [throttledValue, setThrottledValue] = useState(value);
   // eslint-disable-next-line react-hooks/purity
-  const lastUpdated = useRef<number>(Date.now());
+  const lastUpdated = useRef(Date.now());
 
   useEffect(() => {
     const now = Date.now();

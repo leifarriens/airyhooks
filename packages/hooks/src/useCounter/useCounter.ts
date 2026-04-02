@@ -28,7 +28,7 @@ export function useCounter(initialValue = 0): [
     set: (value: ((prev: number) => number) | number) => void;
   },
 ] {
-  const [count, setCount] = useState<number>(initialValue);
+  const [count, setCount] = useState(initialValue);
 
   const increment = useCallback((amount = 1) => {
     setCount((prev) => prev + amount);

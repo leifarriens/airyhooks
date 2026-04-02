@@ -12,15 +12,15 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@eslint/compat": "^2.0.0",
-    "eslint-config-turbo": "^2.7.6",
-    "eslint-plugin-perfectionist": "^5.0.0",
-    "typescript-eslint": "^8.35.1"
+    "@eslint/compat": "^2.0.3",
+    "eslint-config-turbo": "^2.9.3",
+    "eslint-plugin-perfectionist": "^5.8.0",
+    "typescript-eslint": "^8.58.0"
   },
   "devDependencies": {
     "@airyhooks/tsconfig": "workspace:*",
-    "@eslint/js": "^9.38.0",
-    "eslint": "^9.38.0",
-    "typescript": "^5.9.3"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.1.0",
+    "typescript": "^6.0.2"
   }
 }

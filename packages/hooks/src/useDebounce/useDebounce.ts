@@ -17,7 +17,7 @@ import { useEffect, useState } from "react";
  * }, [debouncedSearch]);
  */
 export function useDebounce<T>(value: T, delay = 500): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  const [debouncedValue, setDebouncedValue] = useState(value);
 
   useEffect(() => {
     const timer = setTimeout(() => {

@@ -3,6 +3,7 @@
   "extends": "../base.json",
   "compilerOptions": {
     "noEmit": false,
+    "rootDir": "${configDir}/src",
     "outDir": "${configDir}/dist"
   },
   "exclude": ["${configDir}/**/*.test.ts"],

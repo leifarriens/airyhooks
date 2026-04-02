@@ -25,7 +25,7 @@ interface ScrollPosition {
 export function useScroll(
   ref?: React.RefObject<HTMLElement | null>,
 ): ScrollPosition {
-  const [scroll, setScroll] = useState<ScrollPosition>({ x: 0, y: 0 });
+  const [scroll, setScroll] = useState({ x: 0, y: 0 });
 
   const handleScroll = useCallback(() => {
     if (ref?.current) {
