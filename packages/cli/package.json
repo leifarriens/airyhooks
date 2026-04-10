@@ -11,6 +11,7 @@
     "url": "https://github.com/leifarriens/airyhooks.git",
     "directory": "packages/cli"
   },
+  "homepage": "https://github.com/leifarriens/airyhooks/blob/main/packages/cli/README.md",
   "bin": {
     "airyhooks": "./dist/index.js"
   },
