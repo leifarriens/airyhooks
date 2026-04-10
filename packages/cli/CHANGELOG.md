@@ -1,5 +1,11 @@
 # airyhooks
 
+## 0.5.0
+
+### Minor Changes
+
+- 900a8e7: Replace `--kebab` flag with `--casing`
+
 ## 0.4.1
 
 ### Patch Changes
