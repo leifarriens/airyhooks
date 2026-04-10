@@ -180,11 +180,11 @@ describe("entry", () => {
   it("should pass options through to add command", async () => {
     vi.mocked(prompts).mockResolvedValue({ hookName: "useDebounce" });
 
-    await entry({ force: true, kebab: true });
+    await entry({ casing: "kebab-case", force: true });
 
     expect(addSpy).toHaveBeenCalledWith("useDebounce", {
+      casing: "kebab-case",
       force: true,
-      kebab: true,
     });
   });
 });

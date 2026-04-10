@@ -185,14 +185,14 @@ describe("add", () => {
     );
   });
 
-  it("should write file in kebab-case when kebab option is true", async () => {
+  it("should write file in kebab-case when casing option is kebab-case", async () => {
     vi.mocked(config.getConfig).mockResolvedValue({
       ...config.DEFAULT_CONFIG,
       casing: "kebab-case",
       hooksPath: "lib/hooks",
     });
 
-    await add("useDebounce", { kebab: true });
+    await add("useDebounce", { casing: "kebab-case" });
 
     expect(fs.ensureDir).toHaveBeenCalledWith(
       path.join(mockCwd, "lib/hooks", "use-debounce"),

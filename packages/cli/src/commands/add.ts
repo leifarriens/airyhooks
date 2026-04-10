@@ -15,10 +15,10 @@ import { parseCommandOptions } from "../utils/parse-command-options.js";
 import { registry } from "../utils/registry.js";
 
 export const AddOptionsSchema = v.object({
+  casing: v.optional(v.picklist(["camelCase", "kebab-case"])),
   debug: v.optional(v.boolean()),
   force: v.optional(v.boolean()),
   includeTests: v.optional(v.boolean()),
-  kebab: v.optional(v.boolean()),
   path: v.optional(v.string()),
   raw: v.optional(v.boolean()),
 });
@@ -50,7 +50,7 @@ export async function add(hookName: string, commandOptions: AddOptions = {}) {
   }
 
   const config = await getConfig({
-    ...(options.kebab ? { casing: "kebab-case" } : {}),
+    ...(options.casing ? { casing: options.casing } : {}),
     ...(options.includeTests ? { includeTests: true } : {}),
     ...(options.path ? { hooksPath: options.path } : {}),
   });

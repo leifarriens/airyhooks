@@ -226,7 +226,7 @@ hooks/use-debounce/
 ```
 
 > [!TIP]
-> You can override casing per-command with the `--kebab` flag: `airyhooks add useDebounce --kebab`
+> You can override casing per-command with the `--casing` flag: `airyhooks add useDebounce --casing kebab-case`
 
 #### `structure`
 

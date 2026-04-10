@@ -8,6 +8,10 @@ import { init } from "./commands/init.js";
 import { list } from "./commands/list.js";
 
 const options: Record<keyof AddOptions, Option> = {
+  casing: new Option(
+    "-c, --casing <type>",
+    "Use camelCase or kebab-case for the hook file and directory names. Overrides the default casing in config.",
+  ).choices(["camelCase", "kebab-case"]),
   debug: new Option("--debug", "Enable debug logging").default(false),
   force: new Option(
     "-f, --force",
@@ -16,10 +20,6 @@ const options: Record<keyof AddOptions, Option> = {
   includeTests: new Option(
     "--include-tests",
     "Include test files when adding hooks. Overrides the default setting in config.",
-  ).default(false),
-  kebab: new Option(
-    "-k, --kebab",
-    "Use kebab-case for the hook file and directory names. Overrides the default casing in config.",
   ).default(false),
   path: new Option(
     "-p, --path <directory>",
@@ -44,7 +44,7 @@ program // runs when no sub-command is provided
   .addOption(options.debug)
   .addOption(options.force)
   .addOption(options.includeTests)
-  .addOption(options.kebab)
+  .addOption(options.casing)
   .addOption(options.path)
   .addOption(options.raw)
   .action(entry);
@@ -61,7 +61,7 @@ program
   .addOption(options.debug)
   .addOption(options.force)
   .addOption(options.includeTests)
-  .addOption(options.kebab)
+  .addOption(options.casing)
   .addOption(options.path)
   .addOption(options.raw)
   .action(add);
