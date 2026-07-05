@@ -48,11 +48,12 @@ describe("useTimeout", () => {
 
   it("should reset timeout when delay changes", () => {
     const callback = vi.fn();
+    const initialProps: { delay: null | number } = { delay: 2000 };
     const { rerender } = renderHook(
       ({ delay }: { delay: null | number }) => {
         useTimeout(callback, delay);
       },
-      { initialProps: { delay: 2000 as null | number } },
+      { initialProps },
     );
 
     vi.advanceTimersByTime(1000);

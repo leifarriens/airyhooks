@@ -80,11 +80,18 @@ export function useFetch<T>(
   }, [url]);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (immediate) {
-      void fetchData();
+      queueMicrotask(() => {
+        if (isMounted) {
+          void fetchData();
+        }
+      });
     }
 
     return () => {
+      isMounted = false;
       abortControllerRef.current?.abort();
     };
   }, [fetchData, immediate]);

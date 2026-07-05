@@ -29,7 +29,7 @@ describe("entry", () => {
       "/test/airyhooks.json",
     );
     vi.mocked(parseCommandOptionsModule.parseCommandOptions).mockImplementation(
-      (_schema, opts) => opts as Record<string, unknown>,
+      (_schema, opts) => opts,
     );
     vi.mocked(registryModule).registry = [
       {

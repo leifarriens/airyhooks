@@ -27,11 +27,12 @@ describe("useInterval", () => {
 
   it("should pause when delay is null", () => {
     const callback = vi.fn();
+    const initialProps: { delay: null | number } = { delay: 1000 };
     const { rerender } = renderHook(
       ({ delay }: { delay: null | number }) => {
         useInterval(callback, delay);
       },
-      { initialProps: { delay: 1000 as null | number } },
+      { initialProps },
     );
 
     vi.advanceTimersByTime(1000);

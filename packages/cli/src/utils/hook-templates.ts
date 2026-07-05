@@ -1391,11 +1391,18 @@ export function useFetch<T>(
   }, [url]);
 
   useEffect(() => {
+    let isMounted = true;
+
     if (immediate) {
-      void fetchData();
+      queueMicrotask(() => {
+        if (isMounted) {
+          void fetchData();
+        }
+      });
     }
 
     return () => {
+      isMounted = false;
       abortControllerRef.current?.abort();
     };
   }, [fetchData, immediate]);
@@ -2057,11 +2064,12 @@ describe("useInterval", () => {
 
   it("should pause when delay is null", () => {
     const callback = vi.fn();
+    const initialProps: { delay: null | number } = { delay: 1000 };
     const { rerender } = renderHook(
       ({ delay }: { delay: null | number }) => {
         useInterval(callback, delay);
       },
-      { initialProps: { delay: 1000 as null | number } },
+      { initialProps },
     );
 
     vi.advanceTimersByTime(1000);
@@ -4273,11 +4281,12 @@ describe("useTimeout", () => {
 
   it("should reset timeout when delay changes", () => {
     const callback = vi.fn();
+    const initialProps: { delay: null | number } = { delay: 2000 };
     const { rerender } = renderHook(
       ({ delay }: { delay: null | number }) => {
         useTimeout(callback, delay);
       },
-      { initialProps: { delay: 2000 as null | number } },
+      { initialProps },
     );
 
     vi.advanceTimersByTime(1000);
