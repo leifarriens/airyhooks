@@ -17,6 +17,27 @@ describe("useThrottle", () => {
     expect(result.current).toBe("initial");
   });
 
+  it("should preserve function values without invoking them", () => {
+    const initialValue = vi.fn();
+    const updatedValue = vi.fn();
+    const { rerender, result } = renderHook(
+      ({ value }) => useThrottle(value, 500),
+      { initialProps: { value: initialValue } },
+    );
+
+    expect(result.current).toBe(initialValue);
+    expect(initialValue).not.toHaveBeenCalled();
+
+    rerender({ value: updatedValue });
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current).toBe(updatedValue);
+    expect(updatedValue).not.toHaveBeenCalled();
+  });
+
   it("should throttle rapid updates", () => {
     const { rerender, result } = renderHook(
       ({ value }) => useThrottle(value, 500),

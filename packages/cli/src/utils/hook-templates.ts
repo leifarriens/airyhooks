@@ -3744,7 +3744,8 @@ describe("useSessionStorage", () => {
  * }, [throttledPosition]);
  */
 export function useThrottle<T>(value: T, interval = 500): T {
-  const [throttledValue, setThrottledValue] = useState(value);
+  // Wrap the value so React does not treat function values as initializers.
+  const [throttledValue, setThrottledValue] = useState(() => value);
   // eslint-disable-next-line react-hooks/purity
   const lastUpdated = useRef(Date.now());
 
@@ -3754,11 +3755,13 @@ export function useThrottle<T>(value: T, interval = 500): T {
 
     if (elapsed >= interval) {
       lastUpdated.current = now;
-      setThrottledValue(value);
+      // Wrap the value so React does not treat function values as updaters.
+      setThrottledValue(() => value);
     } else {
       const timer = setTimeout(() => {
         lastUpdated.current = Date.now();
-        setThrottledValue(value);
+        // Wrap the value so React does not treat function values as updaters.
+        setThrottledValue(() => value);
       }, interval - elapsed);
 
       return () => {
@@ -3786,6 +3789,27 @@ describe("useThrottle", () => {
   it("should return initial value immediately", () => {
     const { result } = renderHook(() => useThrottle("initial", 500));
     expect(result.current).toBe("initial");
+  });
+
+  it("should preserve function values without invoking them", () => {
+    const initialValue = vi.fn();
+    const updatedValue = vi.fn();
+    const { rerender, result } = renderHook(
+      ({ value }) => useThrottle(value, 500),
+      { initialProps: { value: initialValue } },
+    );
+
+    expect(result.current).toBe(initialValue);
+    expect(initialValue).not.toHaveBeenCalled();
+
+    rerender({ value: updatedValue });
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current).toBe(updatedValue);
+    expect(updatedValue).not.toHaveBeenCalled();
   });
 
   it("should throttle rapid updates", () => {
