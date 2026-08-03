@@ -69,6 +69,24 @@ describe("useCounter", () => {
     expect(result.current[0]).toBe(5);
   });
 
+  it("should reset to the original initial value after rerender", () => {
+    const { rerender, result } = renderHook(
+      ({ initialValue }: { initialValue: number }) => useCounter(initialValue),
+      { initialProps: { initialValue: 5 } },
+    );
+
+    act(() => {
+      result.current[1].increment(10);
+    });
+    rerender({ initialValue: 10 });
+    expect(result.current[0]).toBe(15);
+
+    act(() => {
+      result.current[1].reset();
+    });
+    expect(result.current[0]).toBe(5);
+  });
+
   it("should set to specific value", () => {
     const { result } = renderHook(() => useCounter(0));
 

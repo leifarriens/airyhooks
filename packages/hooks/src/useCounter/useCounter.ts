@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 /**
  * Manages numeric state with increment, decrement, reset, and set methods.
@@ -28,6 +28,7 @@ export function useCounter(initialValue = 0): [
     set: (value: ((prev: number) => number) | number) => void;
   },
 ] {
+  const initialValueRef = useRef(initialValue);
   const [count, setCount] = useState(initialValue);
 
   const increment = useCallback((amount = 1) => {
@@ -39,8 +40,8 @@ export function useCounter(initialValue = 0): [
   }, []);
 
   const reset = useCallback(() => {
-    setCount(initialValue);
-  }, [initialValue]);
+    setCount(initialValueRef.current);
+  }, []);
 
   const set = useCallback((value: ((prev: number) => number) | number) => {
     setCount(value);
