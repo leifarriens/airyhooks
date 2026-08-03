@@ -17,7 +17,8 @@ import { useEffect, useRef, useState } from "react";
  * }, [throttledPosition]);
  */
 export function useThrottle<T>(value: T, interval = 500): T {
-  const [throttledValue, setThrottledValue] = useState(value);
+  // Wrap the value so React does not treat function values as initializers.
+  const [throttledValue, setThrottledValue] = useState(() => value);
   // eslint-disable-next-line react-hooks/purity
   const lastUpdated = useRef(Date.now());
 
@@ -27,11 +28,13 @@ export function useThrottle<T>(value: T, interval = 500): T {
 
     if (elapsed >= interval) {
       lastUpdated.current = now;
-      setThrottledValue(value);
+      // Wrap the value so React does not treat function values as updaters.
+      setThrottledValue(() => value);
     } else {
       const timer = setTimeout(() => {
         lastUpdated.current = Date.now();
-        setThrottledValue(value);
+        // Wrap the value so React does not treat function values as updaters.
+        setThrottledValue(() => value);
       }, interval - elapsed);
 
       return () => {
