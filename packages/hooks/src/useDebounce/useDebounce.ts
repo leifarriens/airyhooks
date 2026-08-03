@@ -17,11 +17,13 @@ import { useEffect, useState } from "react";
  * }, [debouncedSearch]);
  */
 export function useDebounce<T>(value: T, delay = 500): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+  // Wrap the value so React does not treat function values as initializers.
+  const [debouncedValue, setDebouncedValue] = useState(() => value);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedValue(value);
+      // Wrap the value so React does not treat function values as updaters.
+      setDebouncedValue(() => value);
     }, delay);
 
     return () => {
