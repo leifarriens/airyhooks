@@ -24,6 +24,24 @@ describe("useTimeout", () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
+  it("should not reset the timeout when the callback changes", () => {
+    const firstCallback = vi.fn();
+    const secondCallback = vi.fn();
+    const { rerender } = renderHook(
+      ({ callback }: { callback: () => void }) => {
+        useTimeout(callback, 2000);
+      },
+      { initialProps: { callback: firstCallback } },
+    );
+
+    vi.advanceTimersByTime(1000);
+    rerender({ callback: secondCallback });
+    vi.advanceTimersByTime(1000);
+
+    expect(firstCallback).not.toHaveBeenCalled();
+    expect(secondCallback).toHaveBeenCalledTimes(1);
+  });
+
   it("should cleanup timeout on unmount", () => {
     const callback = vi.fn();
     const { unmount } = renderHook(() => {

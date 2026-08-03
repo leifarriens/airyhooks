@@ -25,6 +25,24 @@ describe("useInterval", () => {
     expect(callback).toHaveBeenCalledTimes(2);
   });
 
+  it("should not reset the interval when the callback changes", () => {
+    const firstCallback = vi.fn();
+    const secondCallback = vi.fn();
+    const { rerender } = renderHook(
+      ({ callback }: { callback: () => void }) => {
+        useInterval(callback, 1000);
+      },
+      { initialProps: { callback: firstCallback } },
+    );
+
+    vi.advanceTimersByTime(500);
+    rerender({ callback: secondCallback });
+    vi.advanceTimersByTime(500);
+
+    expect(firstCallback).not.toHaveBeenCalled();
+    expect(secondCallback).toHaveBeenCalledTimes(1);
+  });
+
   it("should pause when delay is null", () => {
     const callback = vi.fn();
     const initialProps: { delay: null | number } = { delay: 1000 };

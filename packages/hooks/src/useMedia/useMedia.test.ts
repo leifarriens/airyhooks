@@ -69,6 +69,37 @@ describe("useMedia", () => {
     });
   });
 
+  it("should support legacy media query listeners", async () => {
+    let listenerFn: ((e: MediaQueryListEvent) => void) | null = null;
+    const addListener = vi.fn((fn: (e: MediaQueryListEvent) => void) => {
+      listenerFn = fn;
+    });
+    const removeListener = vi.fn();
+
+    Object.defineProperty(window, "matchMedia", {
+      value: vi.fn(() => ({
+        addListener,
+        matches: false,
+        removeListener,
+      })),
+      writable: true,
+    });
+
+    const { result, unmount } = renderHook(() => useMedia("legacy"));
+    expect(addListener).toHaveBeenCalledTimes(1);
+
+    const legacyListener = listenerFn as unknown as (
+      event: MediaQueryListEvent,
+    ) => void;
+    legacyListener({ matches: true } as MediaQueryListEvent);
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    unmount();
+    expect(removeListener).toHaveBeenCalledWith(listenerFn);
+  });
+
   it("should handle invalid media query gracefully", () => {
     const consoleSpy = vi
       .spyOn(console, "warn")

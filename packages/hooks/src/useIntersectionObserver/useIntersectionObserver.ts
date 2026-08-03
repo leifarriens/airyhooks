@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface UseIntersectionObserverOptions {
   /** Whether to stop observing after the first intersection (default: false) */
@@ -57,14 +57,31 @@ export function useIntersectionObserver(
     threshold = 0,
   } = options;
 
-  const ref = useRef<HTMLElement | null>(null);
+  const elementRef = useRef<HTMLElement | null>(null);
+  const [element, setElement] = useState<HTMLElement | null>(null);
   const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
   const hasTriggered = useRef(false);
+  const ref = useMemo(
+    () => ({
+      get current() {
+        return elementRef.current;
+      },
+      set current(node: HTMLElement | null) {
+        if (elementRef.current !== node) {
+          elementRef.current = node;
+          setElement(node);
+        }
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
-    const element = ref.current;
+    if (!element) {
+      return;
+    }
 
-    if (!element || (once && hasTriggered.current)) {
+    if (once && hasTriggered.current) {
       return;
     }
 
@@ -93,7 +110,7 @@ export function useIntersectionObserver(
     return () => {
       observer.disconnect();
     };
-  }, [root, rootMargin, threshold, once]);
+  }, [element, root, rootMargin, threshold, once]);
 
   return {
     entry,

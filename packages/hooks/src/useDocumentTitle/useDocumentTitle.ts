@@ -20,6 +20,11 @@ import { useEffect, useRef } from "react";
  */
 export function useDocumentTitle(title: string, restoreOnUnmount = true): void {
   const previousTitle = useRef<string | undefined>(undefined);
+  const restoreOnUnmountRef = useRef(restoreOnUnmount);
+
+  useEffect(() => {
+    restoreOnUnmountRef.current = restoreOnUnmount;
+  }, [restoreOnUnmount]);
 
   useEffect(() => {
     if (typeof document === "undefined") {
@@ -34,9 +39,9 @@ export function useDocumentTitle(title: string, restoreOnUnmount = true): void {
 
   useEffect(() => {
     return () => {
-      if (restoreOnUnmount && previousTitle.current !== undefined) {
+      if (restoreOnUnmountRef.current && previousTitle.current !== undefined) {
         document.title = previousTitle.current;
       }
     };
-  }, [restoreOnUnmount]);
+  }, []);
 }

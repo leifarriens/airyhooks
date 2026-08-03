@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Calls a callback at specified intervals.
@@ -16,12 +16,20 @@ import { useEffect } from "react";
  * useInterval(callback, isPaused ? null : 1000);
  */
 export function useInterval(callback: () => void, delay: null | number): void {
+  const callbackRef = useRef(callback);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
   useEffect(() => {
     if (delay === null) return;
 
-    const interval = setInterval(callback, delay);
+    const interval = setInterval(() => {
+      callbackRef.current();
+    }, delay);
     return () => {
       clearInterval(interval);
     };
-  }, [callback, delay]);
+  }, [delay]);
 }

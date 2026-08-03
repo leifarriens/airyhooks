@@ -38,10 +38,19 @@ export function useMedia(query: string): boolean {
         setMatches(e.matches);
       };
 
-      // Modern browsers use addEventListener
-      mediaQueryList.addEventListener("change", handleChange);
+      if (typeof mediaQueryList.addEventListener === "function") {
+        mediaQueryList.addEventListener("change", handleChange);
+        return () => {
+          mediaQueryList.removeEventListener("change", handleChange);
+        };
+      }
+
+      // Older browsers expose the deprecated addListener API instead.
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      mediaQueryList.addListener(handleChange);
       return () => {
-        mediaQueryList.removeEventListener("change", handleChange);
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
+        mediaQueryList.removeListener(handleChange);
       };
     } catch (error) {
       console.warn(`Invalid media query: "${query}"`, error);

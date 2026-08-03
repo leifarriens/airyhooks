@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export interface UseCopyToClipboardResult {
   /** The currently copied text, or null if nothing has been copied */
@@ -25,8 +25,11 @@ export interface UseCopyToClipboardResult {
  */
 export function useCopyToClipboard(): UseCopyToClipboardResult {
   const [copiedText, setCopiedText] = useState<null | string>(null);
+  const operationIdRef = useRef(0);
 
   const copy = useCallback(async (text: string): Promise<boolean> => {
+    const operationId = ++operationIdRef.current;
+
     // Check if we're in a browser environment with clipboard support
     const clipboard =
       typeof window !== "undefined" ? navigator.clipboard : undefined;
@@ -38,16 +41,21 @@ export function useCopyToClipboard(): UseCopyToClipboardResult {
 
     try {
       await clipboard.writeText(text);
-      setCopiedText(text);
+      if (operationId === operationIdRef.current) {
+        setCopiedText(text);
+      }
       return true;
     } catch (error) {
       console.warn("Failed to copy to clipboard:", error);
-      setCopiedText(null);
+      if (operationId === operationIdRef.current) {
+        setCopiedText(null);
+      }
       return false;
     }
   }, []);
 
   const reset = useCallback(() => {
+    operationIdRef.current += 1;
     setCopiedText(null);
   }, []);
 

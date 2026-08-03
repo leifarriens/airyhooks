@@ -61,6 +61,21 @@ describe("useDocumentTitle", () => {
     expect(document.title).toBe("Permanent Title");
   });
 
+  it("should not restore the title when the restore option changes", () => {
+    const { rerender, unmount } = renderHook(
+      ({ restoreOnUnmount }) => {
+        useDocumentTitle("Temporary Title", restoreOnUnmount);
+      },
+      { initialProps: { restoreOnUnmount: true } },
+    );
+
+    rerender({ restoreOnUnmount: false });
+    expect(document.title).toBe("Temporary Title");
+
+    unmount();
+    expect(document.title).toBe("Temporary Title");
+  });
+
   it("should restore the initial title, not intermediate titles", () => {
     const { rerender, unmount } = renderHook(
       ({ title }) => {
