@@ -1,5 +1,11 @@
 # airyhooks
 
+## 0.5.1
+
+### Patch Changes
+
+- 1b86add: Preserve function values in `useDebounce` and the original initial value in `useCounter`.
+
 ## 0.5.0
 
 ### Minor Changes
