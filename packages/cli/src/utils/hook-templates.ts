@@ -552,11 +552,13 @@ describe("useCounter", () => {
  * }, [debouncedSearch]);
  */
 export function useDebounce<T>(value: T, delay = 500): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
+  // Wrap the value so React does not treat function values as initializers.
+  const [debouncedValue, setDebouncedValue] = useState(() => value);
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedValue(value);
+      // Wrap the value so React does not treat function values as updaters.
+      setDebouncedValue(() => value);
     }, delay);
 
     return () => {
@@ -579,6 +581,27 @@ describe("useDebounce", () => {
   it("should return initial value immediately", () => {
     const { result } = renderHook(() => useDebounce("initial", 500));
     expect(result.current).toBe("initial");
+  });
+
+  it("should preserve function values without invoking them", () => {
+    const initialValue = vi.fn();
+    const updatedValue = vi.fn();
+    const { rerender, result } = renderHook(
+      ({ value }) => useDebounce(value, 500),
+      { initialProps: { value: initialValue } },
+    );
+
+    expect(result.current).toBe(initialValue);
+    expect(initialValue).not.toHaveBeenCalled();
+
+    rerender({ value: updatedValue });
+
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    expect(result.current).toBe(updatedValue);
+    expect(updatedValue).not.toHaveBeenCalled();
   });
 
   it("should debounce value updates", () => {
