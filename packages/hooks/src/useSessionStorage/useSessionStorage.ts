@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Syncs state with sessionStorage, persisting only for the current session.
@@ -20,19 +20,15 @@ export function useSessionStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: ((prev: T) => T) | T) => void, () => void] {
+  const initialValueRef = useRef(initialValue);
+
   // Get initial value from sessionStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
-    try {
-      const item = window.sessionStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading sessionStorage key "${key}":`, error);
-      return initialValue;
-    }
+    return readStoredValue(window.sessionStorage, key, initialValue);
   });
 
   // Update sessionStorage when value changes
@@ -65,5 +61,22 @@ export function useSessionStorage<T>(
     }
   }, [key, initialValue]);
 
+  useEffect(() => {
+    // Reload the value when the key changes.
+    setStoredValue(
+      readStoredValue(window.sessionStorage, key, initialValueRef.current),
+    );
+  }, [key]);
+
   return [storedValue, setValue, removeValue];
+}
+
+function readStoredValue<T>(storage: Storage, key: string, initialValue: T): T {
+  try {
+    const item = storage.getItem(key);
+    return item === null ? initialValue : (JSON.parse(item) as T);
+  } catch (error) {
+    console.warn(`Error reading sessionStorage key "${key}":`, error);
+    return initialValue;
+  }
 }

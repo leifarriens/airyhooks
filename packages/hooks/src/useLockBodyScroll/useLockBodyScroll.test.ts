@@ -69,6 +69,23 @@ describe("useLockBodyScroll", () => {
     expect(document.body.style.overflow).toBe("");
   });
 
+  it("should keep body locked until all locks are released", () => {
+    document.body.style.overflow = "auto";
+
+    const first = renderHook(() => {
+      useLockBodyScroll();
+    });
+    const second = renderHook(() => {
+      useLockBodyScroll();
+    });
+
+    first.unmount();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    second.unmount();
+    expect(document.body.style.overflow).toBe("auto");
+  });
+
   it("should handle empty string as original overflow", () => {
     document.body.style.overflow = "";
 

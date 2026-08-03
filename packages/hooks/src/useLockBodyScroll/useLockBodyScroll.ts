@@ -1,4 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
+
+interface BodyLockState {
+  count: number;
+  originalOverflow: string;
+}
+
+const bodyLockStates = new WeakMap<Document, BodyLockState>();
 
 /**
  * Temporarily disable scrolling on the document body.
@@ -21,26 +28,32 @@ import { useEffect, useRef } from "react";
  * }
  */
 export function useLockBodyScroll(lock = true): void {
-  const originalStyle = useRef<string | undefined>(undefined);
-
   useEffect(() => {
-    if (typeof document === "undefined") {
+    if (typeof document === "undefined" || !lock) {
       return;
     }
 
-    if (!lock) {
-      return;
-    }
+    const body = document.body;
+    const state = bodyLockStates.get(document) ?? {
+      count: 0,
+      originalOverflow: body.style.overflow,
+    };
 
-    // Store the original overflow style
-    originalStyle.current = document.body.style.overflow;
-
-    // Lock the body scroll
-    document.body.style.overflow = "hidden";
+    state.count += 1;
+    bodyLockStates.set(document, state);
+    body.style.overflow = "hidden";
 
     return () => {
-      // Restore the original overflow style
-      document.body.style.overflow = originalStyle.current ?? "";
+      const currentState = bodyLockStates.get(document);
+      if (!currentState) {
+        return;
+      }
+
+      currentState.count -= 1;
+      if (currentState.count === 0) {
+        body.style.overflow = currentState.originalOverflow;
+        bodyLockStates.delete(document);
+      }
     };
   }, [lock]);
 }

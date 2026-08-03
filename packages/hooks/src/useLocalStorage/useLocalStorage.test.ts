@@ -149,7 +149,8 @@ describe("useLocalStorage", () => {
     expect(result.current[0]).toBe("defaultValue");
   });
 
-  it("should ignore storage events with null newValue", () => {
+  it("should reset when a storage item is removed elsewhere", () => {
+    localStorage.setItem("testKey", JSON.stringify("storedValue"));
     const { result } = renderHook(() =>
       useLocalStorage("testKey", "defaultValue"),
     );
@@ -163,6 +164,20 @@ describe("useLocalStorage", () => {
     });
 
     expect(result.current[0]).toBe("defaultValue");
+  });
+
+  it("should load the value for a changed key", () => {
+    localStorage.setItem("firstKey", JSON.stringify("first"));
+    localStorage.setItem("secondKey", JSON.stringify("second"));
+
+    const { rerender, result } = renderHook(
+      ({ key }) => useLocalStorage(key, "default"),
+      { initialProps: { key: "firstKey" } },
+    );
+
+    expect(result.current[0]).toBe("first");
+    rerender({ key: "secondKey" });
+    expect(result.current[0]).toBe("second");
   });
 
   it("should handle updates from other tabs/windows", () => {

@@ -77,6 +77,29 @@ describe("useEventListener", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it("should follow a ref when its target element is replaced", () => {
+    const handler = vi.fn();
+
+    const Component = ({ id }: { id: string }) => {
+      const ref = React.useRef<HTMLButtonElement>(null);
+      useEventListener("click", handler, ref);
+      return (
+        <button key={id} ref={ref}>
+          {id}
+        </button>
+      );
+    };
+
+    const { getByText, rerender } = render(<Component id="first" />);
+    const firstButton = getByText("first");
+    rerender(<Component id="second" />);
+    const secondButton = getByText("second");
+
+    fireEvent.click(firstButton);
+    fireEvent.click(secondButton);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   it("should add event listener to document", () => {
     const handler = vi.fn();
     const addSpy = vi.spyOn(document, "addEventListener");

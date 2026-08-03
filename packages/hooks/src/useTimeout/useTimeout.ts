@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 /**
  * Calls a callback after a timeout.
@@ -18,12 +18,20 @@ import { useEffect } from "react";
  * }, null);
  */
 export function useTimeout(callback: () => void, delay: null | number): void {
+  const callbackRef = useRef(callback);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
   useEffect(() => {
     if (delay === null) return;
 
-    const timeout = setTimeout(callback, delay);
+    const timeout = setTimeout(() => {
+      callbackRef.current();
+    }, delay);
     return () => {
       clearTimeout(timeout);
     };
-  }, [callback, delay]);
+  }, [delay]);
 }

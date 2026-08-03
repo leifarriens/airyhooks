@@ -56,6 +56,20 @@ describe("useSessionStorage", () => {
     expect(sessionStorage.getItem("test")).toBeNull();
   });
 
+  it("should load the value for a changed key", () => {
+    sessionStorage.setItem("firstKey", JSON.stringify("first"));
+    sessionStorage.setItem("secondKey", JSON.stringify("second"));
+
+    const { rerender, result } = renderHook(
+      ({ key }) => useSessionStorage(key, "default"),
+      { initialProps: { key: "firstKey" } },
+    );
+
+    expect(result.current[0]).toBe("first");
+    rerender({ key: "secondKey" });
+    expect(result.current[0]).toBe("second");
+  });
+
   it("should handle complex objects", () => {
     const obj = { name: "test", value: 42 };
     const { result } = renderHook(() => useSessionStorage("test", obj));

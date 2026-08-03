@@ -77,13 +77,16 @@ export function useMeasure<
 
   useEffect(() => {
     if (!element) {
+      // Do not expose measurements for an element that is no longer attached.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRect(defaultRect);
+      observerRef.current = null;
       return;
     }
 
     if (typeof ResizeObserver === "undefined") {
       // Fallback: get initial dimensions without observing changes
       const boundingRect = element.getBoundingClientRect();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect({
         bottom: boundingRect.bottom,
         height: boundingRect.height,

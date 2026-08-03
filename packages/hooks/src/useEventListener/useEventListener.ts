@@ -65,6 +65,13 @@ export function useEventListener<
     savedHandler.current = handler;
   }, [handler]);
 
+  const listenerRef = useRef<null | {
+    eventListener: typeof handler;
+    eventName: string;
+    options: AddEventListenerOptions | boolean | undefined;
+    target: Document | Element | Window;
+  }>(null);
+
   useEffect(() => {
     let targetElement: Document | Element | null | Window;
 
@@ -76,18 +83,47 @@ export function useEventListener<
       targetElement = element.current;
     }
 
-    if (!targetElement?.addEventListener) {
-      return;
+    const currentListener = listenerRef.current;
+    if (
+      currentListener !== null &&
+      (currentListener.eventName !== eventName ||
+        currentListener.options !== options ||
+        currentListener.target !== targetElement)
+    ) {
+      currentListener.target.removeEventListener(
+        currentListener.eventName,
+        currentListener.eventListener,
+        currentListener.options,
+      );
+      listenerRef.current = null;
     }
 
-    const eventListener: typeof handler = (event) => {
-      savedHandler.current(event);
-    };
+    if (targetElement !== null && listenerRef.current === null) {
+      const eventListener: typeof handler = (event) => {
+        savedHandler.current(event);
+      };
 
-    targetElement.addEventListener(eventName, eventListener, options);
+      targetElement.addEventListener(eventName, eventListener, options);
+      listenerRef.current = {
+        eventListener,
+        eventName,
+        options,
+        target: targetElement,
+      };
+    }
+  });
 
+  useEffect(() => {
     return () => {
-      targetElement.removeEventListener(eventName, eventListener, options);
+      const currentListener = listenerRef.current;
+      if (currentListener) {
+        currentListener.target.removeEventListener(
+          currentListener.eventName,
+          currentListener.eventListener,
+          currentListener.options,
+        );
+        listenerRef.current = null;
+      }
     };
-  }, [eventName, element, options]);
+  }, []);
 }

@@ -44,6 +44,23 @@ describe("useKeyPress", () => {
     });
   });
 
+  it("should reset when the target key changes", async () => {
+    const { rerender, result } = renderHook(
+      ({ targetKey }) => useKeyPress(targetKey),
+      { initialProps: { targetKey: "Enter" } },
+    );
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    });
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    rerender({ targetKey: "Escape" });
+    expect(result.current).toBe(false);
+  });
+
   it("should ignore other keys", () => {
     const { result } = renderHook(() => useKeyPress("Enter"));
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Syncs state with localStorage, persisting across browser sessions.
@@ -20,19 +20,15 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: ((prev: T) => T) | T) => void, () => void] {
+  const initialValueRef = useRef(initialValue);
+
   // Get initial value from localStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.warn(`Error reading localStorage key "${key}":`, error);
-      return initialValue;
-    }
+    return readStoredValue(window.localStorage, key, initialValue);
   });
 
   // Update localStorage when value changes
@@ -68,15 +64,26 @@ export function useLocalStorage<T>(
   // Listen for changes in other tabs/windows
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === key && event.newValue !== null) {
-        try {
-          setStoredValue(JSON.parse(event.newValue) as T);
-        } catch (error) {
-          console.warn(`Error parsing localStorage key "${key}":`, error);
-        }
+      if (event.key !== key && event.key !== null) {
+        return;
+      }
+
+      if (event.newValue === null) {
+        setStoredValue(initialValueRef.current);
+        return;
+      }
+
+      try {
+        setStoredValue(JSON.parse(event.newValue) as T);
+      } catch (error) {
+        console.warn(`Error parsing localStorage key "${key}":`, error);
       }
     };
 
+    // Reload the value when the key changes.
+    setStoredValue(
+      readStoredValue(window.localStorage, key, initialValueRef.current),
+    );
     window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -84,4 +91,14 @@ export function useLocalStorage<T>(
   }, [key]);
 
   return [storedValue, setValue, removeValue];
+}
+
+function readStoredValue<T>(storage: Storage, key: string, initialValue: T): T {
+  try {
+    const item = storage.getItem(key);
+    return item === null ? initialValue : (JSON.parse(item) as T);
+  } catch (error) {
+    console.warn(`Error reading localStorage key "${key}":`, error);
+    return initialValue;
+  }
 }

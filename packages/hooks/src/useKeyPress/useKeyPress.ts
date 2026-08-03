@@ -21,6 +21,11 @@ export function useKeyPress(targetKey: string): boolean {
   const [isKeyPressed, setIsKeyPressed] = useState(false);
 
   useEffect(() => {
+    // A key pressed for the previous target must not remain pressed after the
+    // target changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsKeyPressed(false);
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === targetKey) {
         setIsKeyPressed(true);

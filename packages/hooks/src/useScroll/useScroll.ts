@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ScrollPosition {
   x: number;
@@ -41,25 +41,36 @@ export function useScroll(
     }
   }, [ref]);
 
-  useEffect(() => {
-    // Set initial scroll position
-    handleScroll();
+  const handleScrollRef = useRef(handleScroll);
+  const listenerTargetRef = useRef<HTMLElement | null | Window>(null);
+  const scrollListener = useCallback(() => {
+    handleScrollRef.current();
+  }, []);
 
-    if (ref?.current) {
-      // Listen to element scroll
-      const target = ref.current;
-      target.addEventListener("scroll", handleScroll);
-      return () => {
-        target.removeEventListener("scroll", handleScroll);
-      };
-    } else if (typeof window !== "undefined") {
-      // Listen to window scroll
-      window.addEventListener("scroll", handleScroll);
-      return () => {
-        window.removeEventListener("scroll", handleScroll);
-      };
+  useEffect(() => {
+    handleScrollRef.current = handleScroll;
+  }, [handleScroll]);
+
+  useEffect(() => {
+    const target: HTMLElement | null | Window =
+      ref?.current ?? (typeof window !== "undefined" ? window : null);
+    const previousTarget = listenerTargetRef.current;
+
+    if (previousTarget !== target) {
+      previousTarget?.removeEventListener("scroll", scrollListener);
+      target?.addEventListener("scroll", scrollListener);
+      listenerTargetRef.current = target;
+      // Set the initial position whenever the tracked target changes.
+      handleScroll();
     }
-  }, [ref, handleScroll]);
+  });
+
+  useEffect(() => {
+    return () => {
+      listenerTargetRef.current?.removeEventListener("scroll", scrollListener);
+      listenerTargetRef.current = null;
+    };
+  }, [scrollListener]);
 
   return scroll;
 }

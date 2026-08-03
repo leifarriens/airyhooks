@@ -120,6 +120,84 @@ describe("useFetch", () => {
     });
   });
 
+  it("should ignore stale responses from an older request", async () => {
+    const resolvers: ((response: Response) => void)[] = [];
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const { result } = renderHook(() =>
+      useFetch<typeof mockData>("/api/test", { immediate: false }),
+    );
+
+    let firstRequest: Promise<void> | undefined;
+    let secondRequest: Promise<void> | undefined;
+    act(() => {
+      firstRequest = result.current.refetch();
+      secondRequest = result.current.refetch();
+    });
+
+    expect(resolvers).toHaveLength(2);
+
+    resolvers[0]?.({
+      json: () => Promise.resolve({ id: 1, name: "Old" }),
+      ok: true,
+    } as Response);
+    resolvers[1]?.({
+      json: () => Promise.resolve({ id: 2, name: "New" }),
+      ok: true,
+    } as Response);
+
+    await act(async () => {
+      await Promise.all([firstRequest, secondRequest]);
+    });
+
+    expect(result.current.data).toEqual({ id: 2, name: "New" });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("should keep loading until the newest request completes", async () => {
+    const resolvers: ((response: Response) => void)[] = [];
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const { result } = renderHook(() =>
+      useFetch<typeof mockData>("/api/test", { immediate: false }),
+    );
+
+    let firstRequest: Promise<void> | undefined;
+    let secondRequest: Promise<void> | undefined;
+    act(() => {
+      firstRequest = result.current.refetch();
+      secondRequest = result.current.refetch();
+    });
+
+    resolvers[0]?.({
+      json: () => Promise.resolve(mockData),
+      ok: true,
+    } as Response);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.isLoading).toBe(true);
+
+    resolvers[1]?.({
+      json: () => Promise.resolve(mockData),
+      ok: true,
+    } as Response);
+    await act(async () => {
+      await Promise.all([firstRequest, secondRequest]);
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
   it("should clear error on successful refetch", async () => {
     vi.spyOn(global, "fetch").mockImplementationOnce(() =>
       Promise.resolve({

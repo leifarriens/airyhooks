@@ -82,6 +82,37 @@ describe("useCopyToClipboard", () => {
     consoleSpy.mockRestore();
   });
 
+  it("should keep the latest result when copies complete out of order", async () => {
+    const resolvers: (() => void)[] = [];
+    mockClipboard.writeText.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const { result } = renderHook(() => useCopyToClipboard());
+    let firstCopy: Promise<boolean> | undefined;
+    let secondCopy: Promise<boolean> | undefined;
+
+    act(() => {
+      firstCopy = result.current.copy("First");
+      secondCopy = result.current.copy("Second");
+    });
+
+    resolvers[1]?.();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.copiedText).toBe("Second");
+
+    resolvers[0]?.();
+    await act(async () => {
+      await Promise.all([firstCopy, secondCopy]);
+    });
+    expect(result.current.copiedText).toBe("Second");
+  });
+
   it("should update copiedText on subsequent copies", async () => {
     const { result } = renderHook(() => useCopyToClipboard());
 

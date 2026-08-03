@@ -111,7 +111,7 @@ describe("useMeasure", () => {
   });
 
   it("should handle null ref", () => {
-    let result: ReturnType<typeof useMeasure>;
+    let result!: ReturnType<typeof useMeasure>;
 
     const Component = ({ show }: { show: boolean }) => {
       result = useMeasure();
@@ -126,10 +126,20 @@ describe("useMeasure", () => {
 
     // Observer should be disconnected when element is removed
     expect(mockDisconnect).toHaveBeenCalled();
+    expect(result.rect).toEqual({
+      bottom: 0,
+      height: 0,
+      left: 0,
+      right: 0,
+      top: 0,
+      width: 0,
+      x: 0,
+      y: 0,
+    });
   });
 
   it("should re-observe when element changes", async () => {
-    let result: ReturnType<typeof useMeasure>;
+    let result!: ReturnType<typeof useMeasure>;
 
     const Component = ({ id }: { id: string }) => {
       result = useMeasure();
