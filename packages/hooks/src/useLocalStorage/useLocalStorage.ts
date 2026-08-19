@@ -22,13 +22,17 @@ export function useLocalStorage<T>(
 ): [T, (value: ((prev: T) => T) | T) => void, () => void] {
   const initialValueRef = useRef(initialValue);
 
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   // Get initial value from localStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
-    return readStoredValue(window.localStorage, key, initialValue);
+    return readStoredValue(key, initialValue);
   });
 
   // Update localStorage when value changes
@@ -81,9 +85,7 @@ export function useLocalStorage<T>(
     };
 
     // Reload the value when the key changes.
-    setStoredValue(
-      readStoredValue(window.localStorage, key, initialValueRef.current),
-    );
+    setStoredValue(readStoredValue(key, initialValueRef.current));
     window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -93,9 +95,9 @@ export function useLocalStorage<T>(
   return [storedValue, setValue, removeValue];
 }
 
-function readStoredValue<T>(storage: Storage, key: string, initialValue: T): T {
+function readStoredValue<T>(key: string, initialValue: T): T {
   try {
-    const item = storage.getItem(key);
+    const item = window.localStorage.getItem(key);
     return item === null ? initialValue : (JSON.parse(item) as T);
   } catch (error) {
     console.warn(`Error reading localStorage key "${key}":`, error);

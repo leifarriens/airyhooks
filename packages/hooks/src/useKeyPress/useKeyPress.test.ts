@@ -61,6 +61,22 @@ describe("useKeyPress", () => {
     expect(result.current).toBe(false);
   });
 
+  it("should reset when the window loses focus", async () => {
+    const { result } = renderHook(() => useKeyPress("Enter"));
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    });
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+    });
+    expect(result.current).toBe(false);
+  });
+
   it("should ignore other keys", () => {
     const { result } = renderHook(() => useKeyPress("Enter"));
 
@@ -113,6 +129,10 @@ describe("useKeyPress", () => {
     );
     expect(removeEventListenerSpy).toHaveBeenCalledWith(
       "keyup",
+      expect.any(Function),
+    );
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "blur",
       expect.any(Function),
     );
 

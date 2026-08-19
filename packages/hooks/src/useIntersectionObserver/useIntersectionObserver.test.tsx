@@ -95,6 +95,43 @@ describe("useIntersectionObserver", () => {
     });
   });
 
+  it("should clear intersection state when the target is removed or replaced", async () => {
+    let hookResult: ReturnType<typeof useIntersectionObserver> | undefined;
+
+    const Component = ({ id, visible }: { id: string; visible: boolean }) => {
+      const observerResult = useIntersectionObserver();
+      hookResult = observerResult;
+      return visible ? (
+        <div
+          key={id}
+          ref={observerResult.ref as React.RefObject<HTMLDivElement>}
+        >
+          {id}
+        </div>
+      ) : null;
+    };
+
+    const { getByText, rerender } = render(<Component id="first" visible />);
+    const firstTarget = getByText("first");
+    const firstEntry = {
+      isIntersecting: true,
+      target: firstTarget,
+    } as unknown as IntersectionObserverEntry;
+    mockCallback([firstEntry]);
+
+    await waitFor(() => {
+      expect(hookResult?.isIntersecting).toBe(true);
+    });
+
+    rerender(<Component id="first" visible={false} />);
+    expect(hookResult?.entry).toBeNull();
+    expect(hookResult?.isIntersecting).toBe(false);
+
+    rerender(<Component id="second" visible />);
+    expect(hookResult?.entry).toBeNull();
+    expect(hookResult?.isIntersecting).toBe(false);
+  });
+
   it("should disconnect on unmount", () => {
     const Component = () => {
       const { ref } = useIntersectionObserver();

@@ -23,6 +23,27 @@ describe("usePrevious", () => {
     expect(result.current).toBe(2);
   });
 
+  it("should handle NaN without a render loop", () => {
+    const { rerender, result } = renderHook(({ value }) => usePrevious(value), {
+      initialProps: { value: Number.NaN },
+    });
+
+    expect(result.current).toBeUndefined();
+    expect(() => {
+      rerender({ value: Number.NaN });
+    }).not.toThrow();
+    expect(result.current).toBeUndefined();
+  });
+
+  it("should distinguish zero from negative zero", () => {
+    const { rerender, result } = renderHook(({ value }) => usePrevious(value), {
+      initialProps: { value: 0 },
+    });
+
+    rerender({ value: -0 });
+    expect(Object.is(result.current, 0)).toBe(true);
+  });
+
   it("should work with different types", () => {
     const obj = { name: "Alice" };
     const { rerender, result } = renderHook(({ value }) => usePrevious(value), {

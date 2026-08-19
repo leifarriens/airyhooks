@@ -59,12 +59,10 @@ export async function init() {
   ]);
 
   const hooksPath = response.hooksPath as
-    | AiryhooksConfig["hooksPath"]
-    | undefined;
+    AiryhooksConfig["hooksPath"] | undefined;
   const casing = response.casing as AiryhooksConfig["casing"] | undefined;
   const includeTests = response.includeTests as
-    | AiryhooksConfig["includeTests"]
-    | undefined;
+    AiryhooksConfig["includeTests"] | undefined;
 
   if (!hooksPath || !casing || includeTests === undefined) {
     console.log(pc.yellow("Initialization cancelled."));

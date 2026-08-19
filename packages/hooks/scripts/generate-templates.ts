@@ -104,12 +104,12 @@ function escapeTemplateString(content: string): string {
 /**
  * Generate the CLI template file content.
  */
-function generateTemplateFileContent(templates: HookTemplate[]): string {
+export function generateTemplateFileContent(templates: HookTemplate[]): string {
   const templateEntries = templates
     .map(({ content, name, test }) => {
       const escapedContent = escapeTemplateString(content);
       const escapedTest = escapeTemplateString(test);
-      return `  ${name}: \`${escapedContent}\`,${name}_test: \`${escapedTest}\`,`;
+      return `  ${name}: \`${escapedContent}\`,\n  ${name}_test: \`${escapedTest}\`,`;
     })
     .join("\n\n");
 
@@ -126,6 +126,10 @@ ${templateEntries}
 /**
  * Main entry point.
  */
+export function getGeneratedTemplateFileContent(): string {
+  return generateTemplateFileContent(readHookTemplates());
+}
+
 function main(): void {
   console.log("🔍 Reading hook source files...");
   const templates = readHookTemplates();
@@ -148,4 +152,6 @@ function main(): void {
   console.log(`✅ Written to: ${CLI_OUTPUT_PATH}`);
 }
 
-main();
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main();
+}

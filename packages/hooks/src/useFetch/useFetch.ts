@@ -123,6 +123,13 @@ export function useFetch<T>(
       requestIdRef.current += 1;
       abortControllerRef.current?.abort();
       abortControllerRef.current = null;
+
+      // The component is still mounted when this cleanup is caused by a
+      // dependency change. Without a replacement request, loading must not
+      // remain true after the aborted request has been invalidated.
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     };
   }, [fetchData, immediate]);
 

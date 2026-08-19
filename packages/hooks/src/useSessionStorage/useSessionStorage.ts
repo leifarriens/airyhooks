@@ -10,7 +10,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
  * @example
  * const [sessionData, setSessionData, removeSessionData] = useSessionStorage("session", "default");
  *
- * // Update the session data (automatically persisted)
+ * // Update sessionStorage (automatically persisted)
  * setSessionData("newData");
  *
  * // Remove from sessionStorage
@@ -22,13 +22,17 @@ export function useSessionStorage<T>(
 ): [T, (value: ((prev: T) => T) | T) => void, () => void] {
   const initialValueRef = useRef(initialValue);
 
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   // Get initial value from sessionStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
-    return readStoredValue(window.sessionStorage, key, initialValue);
+    return readStoredValue(key, initialValue);
   });
 
   // Update sessionStorage when value changes
@@ -63,17 +67,15 @@ export function useSessionStorage<T>(
 
   useEffect(() => {
     // Reload the value when the key changes.
-    setStoredValue(
-      readStoredValue(window.sessionStorage, key, initialValueRef.current),
-    );
+    setStoredValue(readStoredValue(key, initialValueRef.current));
   }, [key]);
 
   return [storedValue, setValue, removeValue];
 }
 
-function readStoredValue<T>(storage: Storage, key: string, initialValue: T): T {
+function readStoredValue<T>(key: string, initialValue: T): T {
   try {
-    const item = storage.getItem(key);
+    const item = window.sessionStorage.getItem(key);
     return item === null ? initialValue : (JSON.parse(item) as T);
   } catch (error) {
     console.warn(`Error reading sessionStorage key "${key}":`, error);

@@ -69,6 +69,7 @@ export function useIntersectionObserver(
       set current(node: HTMLElement | null) {
         if (elementRef.current !== node) {
           elementRef.current = node;
+          setEntry(null);
           setElement(node);
         }
       },

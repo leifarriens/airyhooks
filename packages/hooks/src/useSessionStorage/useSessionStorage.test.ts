@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useSessionStorage } from "./useSessionStorage.js";
 
@@ -54,6 +54,47 @@ describe("useSessionStorage", () => {
 
     expect(result.current[0]).toBe("initial");
     expect(sessionStorage.getItem("test")).toBeNull();
+  });
+
+  it("should use the latest fallback for a changed key", () => {
+    const { rerender, result } = renderHook(
+      ({ initialValue, key }) => useSessionStorage(key, initialValue),
+      { initialProps: { initialValue: "first-default", key: "firstKey" } },
+    );
+
+    rerender({ initialValue: "second-default", key: "secondKey" });
+    expect(result.current[0]).toBe("second-default");
+  });
+
+  it("should return the fallback when sessionStorage access throws", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "sessionStorage",
+    );
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(vi.fn());
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      get: () => {
+        throw new DOMException("Blocked", "SecurityError");
+      },
+    });
+
+    try {
+      const { rerender, result } = renderHook(
+        ({ key }) => useSessionStorage(key, "fallback"),
+        { initialProps: { key: "first" } },
+      );
+
+      expect(result.current[0]).toBe("fallback");
+      rerender({ key: "second" });
+      expect(result.current[0]).toBe("fallback");
+      expect(warnSpy).toHaveBeenCalled();
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, "sessionStorage", descriptor);
+      }
+      warnSpy.mockRestore();
+    }
   });
 
   it("should load the value for a changed key", () => {

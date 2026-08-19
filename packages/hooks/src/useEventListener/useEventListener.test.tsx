@@ -119,6 +119,54 @@ describe("useEventListener", () => {
     addSpy.mockRestore();
   });
 
+  it("should add an event listener to an iframe window", () => {
+    const handler = vi.fn();
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+
+    try {
+      const iframeWindow = iframe.contentWindow;
+      if (!iframeWindow) {
+        throw new Error("Expected iframe window");
+      }
+
+      const Component = () => {
+        useEventListener("click", handler, iframeWindow);
+        return null;
+      };
+
+      render(<Component />);
+      iframeWindow.dispatchEvent(new Event("click"));
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      iframe.remove();
+    }
+  });
+
+  it("should add an event listener to an iframe document", () => {
+    const handler = vi.fn();
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+
+    try {
+      const iframeDocument = iframe.contentDocument;
+      if (!iframeDocument) {
+        throw new Error("Expected iframe document");
+      }
+
+      const Component = () => {
+        useEventListener("click", handler, iframeDocument);
+        return null;
+      };
+
+      render(<Component />);
+      iframeDocument.dispatchEvent(new Event("click"));
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      iframe.remove();
+    }
+  });
+
   it("should remove event listener on unmount", () => {
     const handler = vi.fn();
     const removeSpy = vi.spyOn(window, "removeEventListener");

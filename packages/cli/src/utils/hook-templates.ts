@@ -53,7 +53,8 @@ export function useBoolean(initialValue = false): [
     },
   ];
 }
-`,useBoolean_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useBoolean_test: `import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { useBoolean } from "./useBoolean.js";
@@ -150,7 +151,8 @@ export function useClickAway<T extends HTMLElement>(
     };
   }, [ref, callback]);
 }
-`,useClickAway_test: `import { cleanup, fireEvent, render } from "@testing-library/react";
+`,
+  useClickAway_test: `import { cleanup, fireEvent, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -220,7 +222,7 @@ describe("useClickAway", () => {
 });
 `,
 
-  useCopyToClipboard: `import { useCallback, useState } from "react";
+  useCopyToClipboard: `import { useCallback, useRef, useState } from "react";
 
 export interface UseCopyToClipboardResult {
   /** The currently copied text, or null if nothing has been copied */
@@ -247,8 +249,11 @@ export interface UseCopyToClipboardResult {
  */
 export function useCopyToClipboard(): UseCopyToClipboardResult {
   const [copiedText, setCopiedText] = useState<null | string>(null);
+  const operationIdRef = useRef(0);
 
   const copy = useCallback(async (text: string): Promise<boolean> => {
+    const operationId = ++operationIdRef.current;
+
     // Check if we're in a browser environment with clipboard support
     const clipboard =
       typeof window !== "undefined" ? navigator.clipboard : undefined;
@@ -260,22 +265,28 @@ export function useCopyToClipboard(): UseCopyToClipboardResult {
 
     try {
       await clipboard.writeText(text);
-      setCopiedText(text);
+      if (operationId === operationIdRef.current) {
+        setCopiedText(text);
+      }
       return true;
     } catch (error) {
       console.warn("Failed to copy to clipboard:", error);
-      setCopiedText(null);
+      if (operationId === operationIdRef.current) {
+        setCopiedText(null);
+      }
       return false;
     }
   }, []);
 
   const reset = useCallback(() => {
+    operationIdRef.current += 1;
     setCopiedText(null);
   }, []);
 
   return { copiedText, copy, reset };
 }
-`,useCopyToClipboard_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useCopyToClipboard_test: `import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useCopyToClipboard } from "./useCopyToClipboard.js";
@@ -359,6 +370,37 @@ describe("useCopyToClipboard", () => {
     consoleSpy.mockRestore();
   });
 
+  it("should keep the latest result when copies complete out of order", async () => {
+    const resolvers: (() => void)[] = [];
+    mockClipboard.writeText.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const { result } = renderHook(() => useCopyToClipboard());
+    let firstCopy: Promise<boolean> | undefined;
+    let secondCopy: Promise<boolean> | undefined;
+
+    act(() => {
+      firstCopy = result.current.copy("First");
+      secondCopy = result.current.copy("Second");
+    });
+
+    resolvers[1]?.();
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.copiedText).toBe("Second");
+
+    resolvers[0]?.();
+    await act(async () => {
+      await Promise.all([firstCopy, secondCopy]);
+    });
+    expect(result.current.copiedText).toBe("Second");
+  });
+
   it("should update copiedText on subsequent copies", async () => {
     const { result } = renderHook(() => useCopyToClipboard());
 
@@ -434,7 +476,8 @@ export function useCounter(initialValue = 0): [
     },
   ];
 }
-`,useCounter_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useCounter_test: `import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { useCounter } from "./useCounter.js";
@@ -587,7 +630,8 @@ export function useDebounce<T>(value: T, delay = 500): T {
 
   return debouncedValue;
 }
-`,useDebounce_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useDebounce_test: `import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useDebounce } from "./useDebounce.js";
@@ -751,7 +795,8 @@ export function useDebouncedCallback<T extends unknown[]>(
 
   return [debouncedCallback, cancel];
 }
-`,useDebouncedCallback_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useDebouncedCallback_test: `import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useDebouncedCallback } from "./useDebouncedCallback.js";
@@ -977,6 +1022,11 @@ describe("useDebouncedCallback", () => {
  */
 export function useDocumentTitle(title: string, restoreOnUnmount = true): void {
   const previousTitle = useRef<string | undefined>(undefined);
+  const restoreOnUnmountRef = useRef(restoreOnUnmount);
+
+  useEffect(() => {
+    restoreOnUnmountRef.current = restoreOnUnmount;
+  }, [restoreOnUnmount]);
 
   useEffect(() => {
     if (typeof document === "undefined") {
@@ -991,13 +1041,14 @@ export function useDocumentTitle(title: string, restoreOnUnmount = true): void {
 
   useEffect(() => {
     return () => {
-      if (restoreOnUnmount && previousTitle.current !== undefined) {
+      if (restoreOnUnmountRef.current && previousTitle.current !== undefined) {
         document.title = previousTitle.current;
       }
     };
-  }, [restoreOnUnmount]);
+  }, []);
 }
-`,useDocumentTitle_test: `import { cleanup, renderHook } from "@testing-library/react";
+`,
+  useDocumentTitle_test: `import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useDocumentTitle } from "./useDocumentTitle.js";
@@ -1060,6 +1111,21 @@ describe("useDocumentTitle", () => {
     expect(document.title).toBe("Permanent Title");
   });
 
+  it("should not restore the title when the restore option changes", () => {
+    const { rerender, unmount } = renderHook(
+      ({ restoreOnUnmount }) => {
+        useDocumentTitle("Temporary Title", restoreOnUnmount);
+      },
+      { initialProps: { restoreOnUnmount: true } },
+    );
+
+    rerender({ restoreOnUnmount: false });
+    expect(document.title).toBe("Temporary Title");
+
+    unmount();
+    expect(document.title).toBe("Temporary Title");
+  });
+
   it("should restore the initial title, not intermediate titles", () => {
     const { rerender, unmount } = renderHook(
       ({ title }) => {
@@ -1083,6 +1149,11 @@ describe("useDocumentTitle", () => {
 `,
 
   useEventListener: `import { useEffect, useRef } from "react";
+
+type EventListenerTarget = Pick<
+  EventTarget,
+  "addEventListener" | "removeEventListener"
+>;
 
 /**
  * Attaches an event listener to a target element or window with automatic cleanup.
@@ -1149,33 +1220,78 @@ export function useEventListener<
     savedHandler.current = handler;
   }, [handler]);
 
+  const listenerRef = useRef<null | {
+    eventListener: typeof handler;
+    eventName: string;
+    options: AddEventListenerOptions | boolean | undefined;
+    target: EventListenerTarget;
+  }>(null);
+
   useEffect(() => {
-    let targetElement: Document | Element | null | Window;
+    const targetElement =
+      element === undefined
+        ? window
+        : isEventListenerTarget(element)
+          ? element
+          : element.current;
 
-    if (element === undefined) {
-      targetElement = window;
-    } else if (element instanceof Document || element instanceof Window) {
-      targetElement = element;
-    } else {
-      targetElement = element.current;
+    const currentListener = listenerRef.current;
+    if (
+      currentListener !== null &&
+      (currentListener.eventName !== eventName ||
+        currentListener.options !== options ||
+        currentListener.target !== targetElement)
+    ) {
+      currentListener.target.removeEventListener(
+        currentListener.eventName,
+        currentListener.eventListener,
+        currentListener.options,
+      );
+      listenerRef.current = null;
     }
 
-    if (!targetElement?.addEventListener) {
-      return;
+    if (isEventListenerTarget(targetElement) && listenerRef.current === null) {
+      const eventListener: typeof handler = (event) => {
+        savedHandler.current(event);
+      };
+
+      targetElement.addEventListener(eventName, eventListener, options);
+      listenerRef.current = {
+        eventListener,
+        eventName,
+        options,
+        target: targetElement,
+      };
     }
+  });
 
-    const eventListener: typeof handler = (event) => {
-      savedHandler.current(event);
-    };
-
-    targetElement.addEventListener(eventName, eventListener, options);
-
+  useEffect(() => {
     return () => {
-      targetElement.removeEventListener(eventName, eventListener, options);
+      const currentListener = listenerRef.current;
+      if (currentListener) {
+        currentListener.target.removeEventListener(
+          currentListener.eventName,
+          currentListener.eventListener,
+          currentListener.options,
+        );
+        listenerRef.current = null;
+      }
     };
-  }, [eventName, element, options]);
+  }, []);
 }
-`,useEventListener_test: `import { cleanup, fireEvent, render } from "@testing-library/react";
+
+function isEventListenerTarget(value: unknown): value is EventListenerTarget {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "addEventListener" in value &&
+    typeof value.addEventListener === "function" &&
+    "removeEventListener" in value &&
+    typeof value.removeEventListener === "function"
+  );
+}
+`,
+  useEventListener_test: `import { cleanup, fireEvent, render } from "@testing-library/react";
 import React from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -1254,6 +1370,29 @@ describe("useEventListener", () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it("should follow a ref when its target element is replaced", () => {
+    const handler = vi.fn();
+
+    const Component = ({ id }: { id: string }) => {
+      const ref = React.useRef<HTMLButtonElement>(null);
+      useEventListener("click", handler, ref);
+      return (
+        <button key={id} ref={ref}>
+          {id}
+        </button>
+      );
+    };
+
+    const { getByText, rerender } = render(<Component id="first" />);
+    const firstButton = getByText("first");
+    rerender(<Component id="second" />);
+    const secondButton = getByText("second");
+
+    fireEvent.click(firstButton);
+    fireEvent.click(secondButton);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
   it("should add event listener to document", () => {
     const handler = vi.fn();
     const addSpy = vi.spyOn(document, "addEventListener");
@@ -1271,6 +1410,54 @@ describe("useEventListener", () => {
       undefined,
     );
     addSpy.mockRestore();
+  });
+
+  it("should add an event listener to an iframe window", () => {
+    const handler = vi.fn();
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+
+    try {
+      const iframeWindow = iframe.contentWindow;
+      if (!iframeWindow) {
+        throw new Error("Expected iframe window");
+      }
+
+      const Component = () => {
+        useEventListener("click", handler, iframeWindow);
+        return null;
+      };
+
+      render(<Component />);
+      iframeWindow.dispatchEvent(new Event("click"));
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      iframe.remove();
+    }
+  });
+
+  it("should add an event listener to an iframe document", () => {
+    const handler = vi.fn();
+    const iframe = document.createElement("iframe");
+    document.body.append(iframe);
+
+    try {
+      const iframeDocument = iframe.contentDocument;
+      if (!iframeDocument) {
+        throw new Error("Expected iframe document");
+      }
+
+      const Component = () => {
+        useEventListener("click", handler, iframeDocument);
+        return null;
+      };
+
+      render(<Component />);
+      iframeDocument.dispatchEvent(new Event("click"));
+      expect(handler).toHaveBeenCalledTimes(1);
+    } finally {
+      iframe.remove();
+    }
   });
 
   it("should remove event listener on unmount", () => {
@@ -1403,18 +1590,26 @@ export function useFetch<T>(
   const [isLoading, setIsLoading] = useState(immediate);
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const mountedRef = useRef(false);
+  const requestIdRef = useRef(0);
 
   const fetchData = useCallback(async () => {
-    // Cancel any in-flight request
+    if (!mountedRef.current) {
+      return;
+    }
+
+    // Cancel any in-flight request and mark this request as the latest one.
     abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
+    const requestId = ++requestIdRef.current;
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     setIsLoading(true);
     setError(null);
 
     try {
       const response = await fetch(url, {
-        signal: abortControllerRef.current.signal,
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -1422,36 +1617,66 @@ export function useFetch<T>(
       }
 
       const result = (await response.json()) as T;
-      setData(result);
+      if (requestId === requestIdRef.current) {
+        setData(result);
+      }
     } catch (err) {
-      if (err instanceof Error && err.name !== "AbortError") {
+      if (
+        requestId === requestIdRef.current &&
+        err instanceof Error &&
+        err.name !== "AbortError"
+      ) {
         setError(err);
       }
     } finally {
-      setIsLoading(false);
+      if (requestId === requestIdRef.current) {
+        setIsLoading(false);
+        abortControllerRef.current = null;
+      }
     }
   }, [url]);
 
   useEffect(() => {
-    let isMounted = true;
+    mountedRef.current = true;
+
+    return () => {
+      mountedRef.current = false;
+      requestIdRef.current += 1;
+      abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    let isCurrentEffect = true;
 
     if (immediate) {
       queueMicrotask(() => {
-        if (isMounted) {
+        if (isCurrentEffect) {
           void fetchData();
         }
       });
     }
 
     return () => {
-      isMounted = false;
+      isCurrentEffect = false;
+      requestIdRef.current += 1;
       abortControllerRef.current?.abort();
+      abortControllerRef.current = null;
+
+      // The component is still mounted when this cleanup is caused by a
+      // dependency change. Without a replacement request, loading must not
+      // remain true after the aborted request has been invalidated.
+      if (mountedRef.current) {
+        setIsLoading(false);
+      }
     };
   }, [fetchData, immediate]);
 
   return { data, error, isLoading, refetch: fetchData };
 }
-`,useFetch_test: `import { act, renderHook, waitFor } from "@testing-library/react";
+`,
+  useFetch_test: `import { act, renderHook, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useFetch } from "./useFetch.js";
@@ -1573,6 +1798,141 @@ describe("useFetch", () => {
     });
   });
 
+  it("should ignore stale responses from an older request", async () => {
+    const resolvers: ((response: Response) => void)[] = [];
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const { result } = renderHook(() =>
+      useFetch<typeof mockData>("/api/test", { immediate: false }),
+    );
+
+    let firstRequest: Promise<void> | undefined;
+    let secondRequest: Promise<void> | undefined;
+    act(() => {
+      firstRequest = result.current.refetch();
+      secondRequest = result.current.refetch();
+    });
+
+    expect(resolvers).toHaveLength(2);
+
+    resolvers[0]?.({
+      json: () => Promise.resolve({ id: 1, name: "Old" }),
+      ok: true,
+    } as Response);
+    resolvers[1]?.({
+      json: () => Promise.resolve({ id: 2, name: "New" }),
+      ok: true,
+    } as Response);
+
+    await act(async () => {
+      await Promise.all([firstRequest, secondRequest]);
+    });
+
+    expect(result.current.data).toEqual({ id: 2, name: "New" });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("should keep loading until the newest request completes", async () => {
+    const resolvers: ((response: Response) => void)[] = [];
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolvers.push(resolve);
+        }),
+    );
+
+    const { result } = renderHook(() =>
+      useFetch<typeof mockData>("/api/test", { immediate: false }),
+    );
+
+    let firstRequest: Promise<void> | undefined;
+    let secondRequest: Promise<void> | undefined;
+    act(() => {
+      firstRequest = result.current.refetch();
+      secondRequest = result.current.refetch();
+    });
+
+    resolvers[0]?.({
+      json: () => Promise.resolve(mockData),
+      ok: true,
+    } as Response);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    expect(result.current.isLoading).toBe(true);
+
+    resolvers[1]?.({
+      json: () => Promise.resolve(mockData),
+      ok: true,
+    } as Response);
+    await act(async () => {
+      await Promise.all([firstRequest, secondRequest]);
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("should clear loading when an immediate fetch is disabled", async () => {
+    let rejectRequest: ((reason?: unknown) => void) | undefined;
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectRequest = reject;
+        }),
+    );
+
+    const { rerender, result } = renderHook(
+      ({ immediate }) => useFetch<typeof mockData>("/api/test", { immediate }),
+      { initialProps: { immediate: true } },
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ immediate: false });
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      rejectRequest?.(new DOMException("Aborted", "AbortError"));
+      await Promise.resolve();
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("should clear loading when URL changes and immediate fetch is disabled", async () => {
+    let rejectRequest: ((reason?: unknown) => void) | undefined;
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectRequest = reject;
+        }),
+    );
+
+    const { rerender, result } = renderHook(
+      ({ immediate, url }) => useFetch<typeof mockData>(url, { immediate }),
+      { initialProps: { immediate: true, url: "/api/first" } },
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ immediate: false, url: "/api/second" });
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      rejectRequest?.(new DOMException("Aborted", "AbortError"));
+      await Promise.resolve();
+    });
+    expect(result.current.isLoading).toBe(false);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("should clear error on successful refetch", async () => {
     vi.spyOn(global, "fetch").mockImplementationOnce(() =>
       Promise.resolve({
@@ -1604,7 +1964,7 @@ describe("useFetch", () => {
 });
 `,
 
-  useHover: `import { useCallback, useRef, useState } from "react";
+  useHover: `import { useCallback, useMemo, useRef, useState } from "react";
 
 /**
  * Tracks mouse hover state on a DOM element via ref.
@@ -1629,7 +1989,7 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
   boolean,
   React.RefObject<T>,
 ] {
-  const ref = useRef<T>(null);
+  const elementRef = useRef<null | T>(null);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = useCallback(() => {
@@ -1640,38 +2000,45 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
     setIsHovered(false);
   }, []);
 
-  // Attach event listeners to the ref
   const setRef = useCallback(
     (element: null | T) => {
-      if (ref.current) {
-        ref.current.removeEventListener("mouseenter", handleMouseEnter);
-        ref.current.removeEventListener("mouseleave", handleMouseLeave);
+      if (elementRef.current === element) {
+        return;
       }
+
+      if (elementRef.current) {
+        elementRef.current.removeEventListener("mouseenter", handleMouseEnter);
+        elementRef.current.removeEventListener("mouseleave", handleMouseLeave);
+      }
+
+      elementRef.current = element;
+      setIsHovered(false);
 
       if (element) {
         element.addEventListener("mouseenter", handleMouseEnter);
         element.addEventListener("mouseleave", handleMouseLeave);
       }
-
-      ref.current = element;
     },
     [handleMouseEnter, handleMouseLeave],
   );
 
-  // Return a proxy ref that updates the internal ref
-  return [
-    isHovered,
-    {
-      get current() {
-        return ref.current;
-      },
-      set current(element: null | T) {
-        setRef(element);
-      },
-    } as React.RefObject<T>,
-  ];
+  const ref = useMemo(
+    () =>
+      ({
+        get current() {
+          return elementRef.current;
+        },
+        set current(element: null | T) {
+          setRef(element);
+        },
+      }) as React.RefObject<T>,
+    [setRef],
+  );
+
+  return [isHovered, ref];
 }
-`,useHover_test: `import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+`,
+  useHover_test: `import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { useHover } from "./useHover.js";
@@ -1716,6 +2083,32 @@ describe("useHover", () => {
     expect(element.textContent).toBe("Not hovering");
   });
 
+  it("should reset hover state when the target is removed or replaced", () => {
+    const Component = ({ id, visible }: { id: string; visible: boolean }) => {
+      const [isHovered, ref] = useHover<HTMLDivElement>();
+      return (
+        <>
+          <output data-testid="hover-state">
+            {isHovered ? "Hovering" : "Not hovering"}
+          </output>
+          {visible ? (
+            <div data-testid="hover-element" key={id} ref={ref} />
+          ) : null}
+        </>
+      );
+    };
+
+    const { rerender } = render(<Component id="first" visible />);
+    fireEvent.mouseEnter(screen.getByTestId("hover-element"));
+    expect(screen.getByTestId("hover-state").textContent).toBe("Hovering");
+
+    rerender(<Component id="first" visible={false} />);
+    expect(screen.getByTestId("hover-state").textContent).toBe("Not hovering");
+
+    rerender(<Component id="second" visible />);
+    expect(screen.getByTestId("hover-state").textContent).toBe("Not hovering");
+  });
+
   it("should handle multiple enter/leave cycles", () => {
     render(<TestComponent />);
     const element = screen.getByTestId("hover-element");
@@ -1732,7 +2125,7 @@ describe("useHover", () => {
 });
 `,
 
-  useIntersectionObserver: `import { useEffect, useRef, useState } from "react";
+  useIntersectionObserver: `import { useEffect, useMemo, useRef, useState } from "react";
 
 export interface UseIntersectionObserverOptions {
   /** Whether to stop observing after the first intersection (default: false) */
@@ -1791,14 +2184,32 @@ export function useIntersectionObserver(
     threshold = 0,
   } = options;
 
-  const ref = useRef<HTMLElement | null>(null);
+  const elementRef = useRef<HTMLElement | null>(null);
+  const [element, setElement] = useState<HTMLElement | null>(null);
   const [entry, setEntry] = useState<IntersectionObserverEntry | null>(null);
   const hasTriggered = useRef(false);
+  const ref = useMemo(
+    () => ({
+      get current() {
+        return elementRef.current;
+      },
+      set current(node: HTMLElement | null) {
+        if (elementRef.current !== node) {
+          elementRef.current = node;
+          setEntry(null);
+          setElement(node);
+        }
+      },
+    }),
+    [],
+  );
 
   useEffect(() => {
-    const element = ref.current;
+    if (!element) {
+      return;
+    }
 
-    if (!element || (once && hasTriggered.current)) {
+    if (once && hasTriggered.current) {
       return;
     }
 
@@ -1827,7 +2238,7 @@ export function useIntersectionObserver(
     return () => {
       observer.disconnect();
     };
-  }, [root, rootMargin, threshold, once]);
+  }, [element, root, rootMargin, threshold, once]);
 
   return {
     entry,
@@ -1835,7 +2246,8 @@ export function useIntersectionObserver(
     ref,
   };
 }
-`,useIntersectionObserver_test: `import { cleanup, render, waitFor } from "@testing-library/react";
+`,
+  useIntersectionObserver_test: `import { cleanup, render, waitFor } from "@testing-library/react";
 import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -1930,6 +2342,43 @@ describe("useIntersectionObserver", () => {
       expect(hookResult.isIntersecting).toBe(true);
       expect(hookResult.entry).toBe(mockEntry);
     });
+  });
+
+  it("should clear intersection state when the target is removed or replaced", async () => {
+    let hookResult: ReturnType<typeof useIntersectionObserver> | undefined;
+
+    const Component = ({ id, visible }: { id: string; visible: boolean }) => {
+      const observerResult = useIntersectionObserver();
+      hookResult = observerResult;
+      return visible ? (
+        <div
+          key={id}
+          ref={observerResult.ref as React.RefObject<HTMLDivElement>}
+        >
+          {id}
+        </div>
+      ) : null;
+    };
+
+    const { getByText, rerender } = render(<Component id="first" visible />);
+    const firstTarget = getByText("first");
+    const firstEntry = {
+      isIntersecting: true,
+      target: firstTarget,
+    } as unknown as IntersectionObserverEntry;
+    mockCallback([firstEntry]);
+
+    await waitFor(() => {
+      expect(hookResult?.isIntersecting).toBe(true);
+    });
+
+    rerender(<Component id="first" visible={false} />);
+    expect(hookResult?.entry).toBeNull();
+    expect(hookResult?.isIntersecting).toBe(false);
+
+    rerender(<Component id="second" visible />);
+    expect(hookResult?.entry).toBeNull();
+    expect(hookResult?.isIntersecting).toBe(false);
   });
 
   it("should disconnect on unmount", () => {
@@ -2050,7 +2499,7 @@ describe("useIntersectionObserver", () => {
 });
 `,
 
-  useInterval: `import { useEffect } from "react";
+  useInterval: `import { useEffect, useRef } from "react";
 
 /**
  * Calls a callback at specified intervals.
@@ -2068,16 +2517,25 @@ describe("useIntersectionObserver", () => {
  * useInterval(callback, isPaused ? null : 1000);
  */
 export function useInterval(callback: () => void, delay: null | number): void {
+  const callbackRef = useRef(callback);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
   useEffect(() => {
     if (delay === null) return;
 
-    const interval = setInterval(callback, delay);
+    const interval = setInterval(() => {
+      callbackRef.current();
+    }, delay);
     return () => {
       clearInterval(interval);
     };
-  }, [callback, delay]);
+  }, [delay]);
 }
-`,useInterval_test: `import { renderHook } from "@testing-library/react";
+`,
+  useInterval_test: `import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useInterval } from "./useInterval.js";
@@ -2102,6 +2560,24 @@ describe("useInterval", () => {
 
     vi.advanceTimersByTime(1000);
     expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it("should not reset the interval when the callback changes", () => {
+    const firstCallback = vi.fn();
+    const secondCallback = vi.fn();
+    const { rerender } = renderHook(
+      ({ callback }: { callback: () => void }) => {
+        useInterval(callback, 1000);
+      },
+      { initialProps: { callback: firstCallback } },
+    );
+
+    vi.advanceTimersByTime(500);
+    rerender({ callback: secondCallback });
+    vi.advanceTimersByTime(500);
+
+    expect(firstCallback).not.toHaveBeenCalled();
+    expect(secondCallback).toHaveBeenCalledTimes(1);
   });
 
   it("should pause when delay is null", () => {
@@ -2182,7 +2658,8 @@ export function useIsClient(): boolean {
     () => false, // Server snapshot - always false during SSR
   );
 }
-`,useIsClient_test: `import { renderHook } from "@testing-library/react";
+`,
+  useIsClient_test: `import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { useIsClient } from "./useIsClient.js";
@@ -2232,6 +2709,11 @@ export function useKeyPress(targetKey: string): boolean {
   const [isKeyPressed, setIsKeyPressed] = useState(false);
 
   useEffect(() => {
+    // A key pressed for the previous target must not remain pressed after the
+    // target changes.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setIsKeyPressed(false);
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === targetKey) {
         setIsKeyPressed(true);
@@ -2244,18 +2726,25 @@ export function useKeyPress(targetKey: string): boolean {
       }
     };
 
+    const handleBlur = () => {
+      setIsKeyPressed(false);
+    };
+
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("blur", handleBlur);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
+      window.removeEventListener("blur", handleBlur);
     };
   }, [targetKey]);
 
   return isKeyPressed;
 }
-`,useKeyPress_test: `import { act, renderHook, waitFor } from "@testing-library/react";
+`,
+  useKeyPress_test: `import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useKeyPress } from "./useKeyPress.js";
@@ -2299,6 +2788,39 @@ describe("useKeyPress", () => {
     await waitFor(() => {
       expect(result.current).toBe(false);
     });
+  });
+
+  it("should reset when the target key changes", async () => {
+    const { rerender, result } = renderHook(
+      ({ targetKey }) => useKeyPress(targetKey),
+      { initialProps: { targetKey: "Enter" } },
+    );
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    });
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    rerender({ targetKey: "Escape" });
+    expect(result.current).toBe(false);
+  });
+
+  it("should reset when the window loses focus", async () => {
+    const { result } = renderHook(() => useKeyPress("Enter"));
+
+    act(() => {
+      window.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter" }));
+    });
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    act(() => {
+      window.dispatchEvent(new Event("blur"));
+    });
+    expect(result.current).toBe(false);
   });
 
   it("should ignore other keys", () => {
@@ -2355,13 +2877,17 @@ describe("useKeyPress", () => {
       "keyup",
       expect.any(Function),
     );
+    expect(removeEventListenerSpy).toHaveBeenCalledWith(
+      "blur",
+      expect.any(Function),
+    );
 
     removeEventListenerSpy.mockRestore();
   });
 });
 `,
 
-  useLocalStorage: `import { useCallback, useEffect, useState } from "react";
+  useLocalStorage: `import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Syncs state with localStorage, persisting across browser sessions.
@@ -2383,19 +2909,19 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: ((prev: T) => T) | T) => void, () => void] {
+  const initialValueRef = useRef(initialValue);
+
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   // Get initial value from localStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
-    try {
-      const item = window.localStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.warn(\`Error reading localStorage key "\${key}":\`, error);
-      return initialValue;
-    }
+    return readStoredValue(key, initialValue);
   });
 
   // Update localStorage when value changes
@@ -2431,15 +2957,24 @@ export function useLocalStorage<T>(
   // Listen for changes in other tabs/windows
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === key && event.newValue !== null) {
-        try {
-          setStoredValue(JSON.parse(event.newValue) as T);
-        } catch (error) {
-          console.warn(\`Error parsing localStorage key "\${key}":\`, error);
-        }
+      if (event.key !== key && event.key !== null) {
+        return;
+      }
+
+      if (event.newValue === null) {
+        setStoredValue(initialValueRef.current);
+        return;
+      }
+
+      try {
+        setStoredValue(JSON.parse(event.newValue) as T);
+      } catch (error) {
+        console.warn(\`Error parsing localStorage key "\${key}":\`, error);
       }
     };
 
+    // Reload the value when the key changes.
+    setStoredValue(readStoredValue(key, initialValueRef.current));
     window.addEventListener("storage", handleStorageChange);
     return () => {
       window.removeEventListener("storage", handleStorageChange);
@@ -2448,7 +2983,18 @@ export function useLocalStorage<T>(
 
   return [storedValue, setValue, removeValue];
 }
-`,useLocalStorage_test: `import { act, renderHook } from "@testing-library/react";
+
+function readStoredValue<T>(key: string, initialValue: T): T {
+  try {
+    const item = window.localStorage.getItem(key);
+    return item === null ? initialValue : (JSON.parse(item) as T);
+  } catch (error) {
+    console.warn(\`Error reading localStorage key "\${key}":\`, error);
+    return initialValue;
+  }
+}
+`,
+  useLocalStorage_test: `import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useLocalStorage } from "./useLocalStorage.js";
@@ -2599,7 +3145,8 @@ describe("useLocalStorage", () => {
     expect(result.current[0]).toBe("defaultValue");
   });
 
-  it("should ignore storage events with null newValue", () => {
+  it("should reset when a storage item is removed elsewhere", () => {
+    localStorage.setItem("testKey", JSON.stringify("storedValue"));
     const { result } = renderHook(() =>
       useLocalStorage("testKey", "defaultValue"),
     );
@@ -2613,6 +3160,65 @@ describe("useLocalStorage", () => {
     });
 
     expect(result.current[0]).toBe("defaultValue");
+  });
+
+  it("should use the latest fallback for a changed key and storage deletion", () => {
+    const { rerender, result } = renderHook(
+      ({ initialValue, key }) => useLocalStorage(key, initialValue),
+      { initialProps: { initialValue: "first-default", key: "firstKey" } },
+    );
+
+    rerender({ initialValue: "second-default", key: "secondKey" });
+    expect(result.current[0]).toBe("second-default");
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "secondKey", newValue: null }),
+      );
+    });
+    expect(result.current[0]).toBe("second-default");
+  });
+
+  it("should return the fallback when localStorage access throws", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, "localStorage");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(vi.fn());
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get: () => {
+        throw new DOMException("Blocked", "SecurityError");
+      },
+    });
+
+    try {
+      const { rerender, result } = renderHook(
+        ({ key }) => useLocalStorage(key, "fallback"),
+        { initialProps: { key: "first" } },
+      );
+
+      expect(result.current[0]).toBe("fallback");
+      rerender({ key: "second" });
+      expect(result.current[0]).toBe("fallback");
+      expect(warnSpy).toHaveBeenCalled();
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, "localStorage", descriptor);
+      }
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("should load the value for a changed key", () => {
+    localStorage.setItem("firstKey", JSON.stringify("first"));
+    localStorage.setItem("secondKey", JSON.stringify("second"));
+
+    const { rerender, result } = renderHook(
+      ({ key }) => useLocalStorage(key, "default"),
+      { initialProps: { key: "firstKey" } },
+    );
+
+    expect(result.current[0]).toBe("first");
+    rerender({ key: "secondKey" });
+    expect(result.current[0]).toBe("second");
   });
 
   it("should handle updates from other tabs/windows", () => {
@@ -2667,7 +3273,14 @@ it("should handle edge case with empty string key", () => {
 });
 `,
 
-  useLockBodyScroll: `import { useEffect, useRef } from "react";
+  useLockBodyScroll: `import { useEffect } from "react";
+
+interface BodyLockState {
+  count: number;
+  originalOverflow: string;
+}
+
+const bodyLockStates = new WeakMap<Document, BodyLockState>();
 
 /**
  * Temporarily disable scrolling on the document body.
@@ -2690,30 +3303,37 @@ it("should handle edge case with empty string key", () => {
  * }
  */
 export function useLockBodyScroll(lock = true): void {
-  const originalStyle = useRef<string | undefined>(undefined);
-
   useEffect(() => {
-    if (typeof document === "undefined") {
+    if (typeof document === "undefined" || !lock) {
       return;
     }
 
-    if (!lock) {
-      return;
-    }
+    const body = document.body;
+    const state = bodyLockStates.get(document) ?? {
+      count: 0,
+      originalOverflow: body.style.overflow,
+    };
 
-    // Store the original overflow style
-    originalStyle.current = document.body.style.overflow;
-
-    // Lock the body scroll
-    document.body.style.overflow = "hidden";
+    state.count += 1;
+    bodyLockStates.set(document, state);
+    body.style.overflow = "hidden";
 
     return () => {
-      // Restore the original overflow style
-      document.body.style.overflow = originalStyle.current ?? "";
+      const currentState = bodyLockStates.get(document);
+      if (!currentState) {
+        return;
+      }
+
+      currentState.count -= 1;
+      if (currentState.count === 0) {
+        body.style.overflow = currentState.originalOverflow;
+        bodyLockStates.delete(document);
+      }
     };
   }, [lock]);
 }
-`,useLockBodyScroll_test: `import { cleanup, renderHook } from "@testing-library/react";
+`,
+  useLockBodyScroll_test: `import { cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { useLockBodyScroll } from "./useLockBodyScroll.js";
@@ -2782,6 +3402,23 @@ describe("useLockBodyScroll", () => {
 
     rerender({ lock: false });
     expect(document.body.style.overflow).toBe("");
+  });
+
+  it("should keep body locked until all locks are released", () => {
+    document.body.style.overflow = "auto";
+
+    const first = renderHook(() => {
+      useLockBodyScroll();
+    });
+    const second = renderHook(() => {
+      useLockBodyScroll();
+    });
+
+    first.unmount();
+    expect(document.body.style.overflow).toBe("hidden");
+
+    second.unmount();
+    expect(document.body.style.overflow).toBe("auto");
   });
 
   it("should handle empty string as original overflow", () => {
@@ -2891,13 +3528,16 @@ export function useMeasure<
 
   useEffect(() => {
     if (!element) {
+      // Do not expose measurements for an element that is no longer attached.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setRect(defaultRect);
+      observerRef.current = null;
       return;
     }
 
     if (typeof ResizeObserver === "undefined") {
       // Fallback: get initial dimensions without observing changes
       const boundingRect = element.getBoundingClientRect();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRect({
         bottom: boundingRect.bottom,
         height: boundingRect.height,
@@ -2936,7 +3576,8 @@ export function useMeasure<
 
   return { rect, ref };
 }
-`,useMeasure_test: `import { cleanup, render, waitFor } from "@testing-library/react";
+`,
+  useMeasure_test: `import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useMeasure } from "./useMeasure.js";
@@ -3049,7 +3690,7 @@ describe("useMeasure", () => {
   });
 
   it("should handle null ref", () => {
-    let result: ReturnType<typeof useMeasure>;
+    let result!: ReturnType<typeof useMeasure>;
 
     const Component = ({ show }: { show: boolean }) => {
       result = useMeasure();
@@ -3064,10 +3705,20 @@ describe("useMeasure", () => {
 
     // Observer should be disconnected when element is removed
     expect(mockDisconnect).toHaveBeenCalled();
+    expect(result.rect).toEqual({
+      bottom: 0,
+      height: 0,
+      left: 0,
+      right: 0,
+      top: 0,
+      width: 0,
+      x: 0,
+      y: 0,
+    });
   });
 
   it("should re-observe when element changes", async () => {
-    let result: ReturnType<typeof useMeasure>;
+    let result!: ReturnType<typeof useMeasure>;
 
     const Component = ({ id }: { id: string }) => {
       result = useMeasure();
@@ -3172,10 +3823,19 @@ export function useMedia(query: string): boolean {
         setMatches(e.matches);
       };
 
-      // Modern browsers use addEventListener
-      mediaQueryList.addEventListener("change", handleChange);
+      if (typeof mediaQueryList.addEventListener === "function") {
+        mediaQueryList.addEventListener("change", handleChange);
+        return () => {
+          mediaQueryList.removeEventListener("change", handleChange);
+        };
+      }
+
+      // Older browsers expose the deprecated addListener API instead.
+      // eslint-disable-next-line @typescript-eslint/no-deprecated
+      mediaQueryList.addListener(handleChange);
       return () => {
-        mediaQueryList.removeEventListener("change", handleChange);
+        // eslint-disable-next-line @typescript-eslint/no-deprecated
+        mediaQueryList.removeListener(handleChange);
       };
     } catch (error) {
       console.warn(\`Invalid media query: "\${query}"\`, error);
@@ -3185,7 +3845,8 @@ export function useMedia(query: string): boolean {
 
   return matches;
 }
-`,useMedia_test: `import { renderHook, waitFor } from "@testing-library/react";
+`,
+  useMedia_test: `import { renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useMedia } from "./useMedia.js";
@@ -3254,6 +3915,37 @@ describe("useMedia", () => {
     await waitFor(() => {
       expect(result.current).toBe(true);
     });
+  });
+
+  it("should support legacy media query listeners", async () => {
+    let listenerFn: ((e: MediaQueryListEvent) => void) | null = null;
+    const addListener = vi.fn((fn: (e: MediaQueryListEvent) => void) => {
+      listenerFn = fn;
+    });
+    const removeListener = vi.fn();
+
+    Object.defineProperty(window, "matchMedia", {
+      value: vi.fn(() => ({
+        addListener,
+        matches: false,
+        removeListener,
+      })),
+      writable: true,
+    });
+
+    const { result, unmount } = renderHook(() => useMedia("legacy"));
+    expect(addListener).toHaveBeenCalledTimes(1);
+
+    const legacyListener = listenerFn as unknown as (
+      event: MediaQueryListEvent,
+    ) => void;
+    legacyListener({ matches: true } as MediaQueryListEvent);
+    await waitFor(() => {
+      expect(result.current).toBe(true);
+    });
+
+    unmount();
+    expect(removeListener).toHaveBeenCalledWith(listenerFn);
   });
 
   it("should handle invalid media query gracefully", () => {
@@ -3351,7 +4043,8 @@ export function useMount(callback: () => void): void {
   // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only run on mount
   useEffect(callback, []);
 }
-`,useMount_test: `import { renderHook } from "@testing-library/react";
+`,
+  useMount_test: `import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useMount } from "./useMount.js";
@@ -3399,14 +4092,15 @@ export function usePrevious<T>(value: T): T | undefined {
   const [current, setCurrent] = useState(value);
   const [previous, setPrevious] = useState<T | undefined>(undefined);
 
-  if (current !== value) {
+  if (!Object.is(current, value)) {
     setPrevious(current);
     setCurrent(value);
   }
 
   return previous;
 }
-`,usePrevious_test: `import { renderHook } from "@testing-library/react";
+`,
+  usePrevious_test: `import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { usePrevious } from "./usePrevious.js";
@@ -3431,6 +4125,27 @@ describe("usePrevious", () => {
     expect(result.current).toBe(2);
   });
 
+  it("should handle NaN without a render loop", () => {
+    const { rerender, result } = renderHook(({ value }) => usePrevious(value), {
+      initialProps: { value: Number.NaN },
+    });
+
+    expect(result.current).toBeUndefined();
+    expect(() => {
+      rerender({ value: Number.NaN });
+    }).not.toThrow();
+    expect(result.current).toBeUndefined();
+  });
+
+  it("should distinguish zero from negative zero", () => {
+    const { rerender, result } = renderHook(({ value }) => usePrevious(value), {
+      initialProps: { value: 0 },
+    });
+
+    rerender({ value: -0 });
+    expect(Object.is(result.current, 0)).toBe(true);
+  });
+
   it("should work with different types", () => {
     const obj = { name: "Alice" };
     const { rerender, result } = renderHook(({ value }) => usePrevious(value), {
@@ -3446,7 +4161,7 @@ describe("usePrevious", () => {
 });
 `,
 
-  useScroll: `import { useCallback, useEffect, useState } from "react";
+  useScroll: `import { useCallback, useEffect, useRef, useState } from "react";
 
 interface ScrollPosition {
   x: number;
@@ -3489,29 +4204,41 @@ export function useScroll(
     }
   }, [ref]);
 
-  useEffect(() => {
-    // Set initial scroll position
-    handleScroll();
+  const handleScrollRef = useRef(handleScroll);
+  const listenerTargetRef = useRef<HTMLElement | null | Window>(null);
+  const scrollListener = useCallback(() => {
+    handleScrollRef.current();
+  }, []);
 
-    if (ref?.current) {
-      // Listen to element scroll
-      const target = ref.current;
-      target.addEventListener("scroll", handleScroll);
-      return () => {
-        target.removeEventListener("scroll", handleScroll);
-      };
-    } else if (typeof window !== "undefined") {
-      // Listen to window scroll
-      window.addEventListener("scroll", handleScroll);
-      return () => {
-        window.removeEventListener("scroll", handleScroll);
-      };
+  useEffect(() => {
+    handleScrollRef.current = handleScroll;
+  }, [handleScroll]);
+
+  useEffect(() => {
+    const target: HTMLElement | null | Window =
+      ref?.current ?? (typeof window !== "undefined" ? window : null);
+    const previousTarget = listenerTargetRef.current;
+
+    if (previousTarget !== target) {
+      previousTarget?.removeEventListener("scroll", scrollListener);
+      target?.addEventListener("scroll", scrollListener);
+      listenerTargetRef.current = target;
+      // Set the initial position whenever the tracked target changes.
+      handleScroll();
     }
-  }, [ref, handleScroll]);
+  });
+
+  useEffect(() => {
+    return () => {
+      listenerTargetRef.current?.removeEventListener("scroll", scrollListener);
+      listenerTargetRef.current = null;
+    };
+  }, [scrollListener]);
 
   return scroll;
 }
-`,useScroll_test: `import { act, renderHook, waitFor } from "@testing-library/react";
+`,
+  useScroll_test: `import { act, renderHook, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useScroll } from "./useScroll.js";
@@ -3575,7 +4302,7 @@ describe("useScroll", () => {
 });
 `,
 
-  useSessionStorage: `import { useCallback, useState } from "react";
+  useSessionStorage: `import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Syncs state with sessionStorage, persisting only for the current session.
@@ -3587,7 +4314,7 @@ describe("useScroll", () => {
  * @example
  * const [sessionData, setSessionData, removeSessionData] = useSessionStorage("session", "default");
  *
- * // Update the session data (automatically persisted)
+ * // Update sessionStorage (automatically persisted)
  * setSessionData("newData");
  *
  * // Remove from sessionStorage
@@ -3597,19 +4324,19 @@ export function useSessionStorage<T>(
   key: string,
   initialValue: T,
 ): [T, (value: ((prev: T) => T) | T) => void, () => void] {
+  const initialValueRef = useRef(initialValue);
+
+  useEffect(() => {
+    initialValueRef.current = initialValue;
+  }, [initialValue]);
+
   // Get initial value from sessionStorage or use provided initial value
   const [storedValue, setStoredValue] = useState<T>(() => {
     if (typeof window === "undefined") {
       return initialValue;
     }
 
-    try {
-      const item = window.sessionStorage.getItem(key);
-      return item ? (JSON.parse(item) as T) : initialValue;
-    } catch (error) {
-      console.warn(\`Error reading sessionStorage key "\${key}":\`, error);
-      return initialValue;
-    }
+    return readStoredValue(key, initialValue);
   });
 
   // Update sessionStorage when value changes
@@ -3642,10 +4369,26 @@ export function useSessionStorage<T>(
     }
   }, [key, initialValue]);
 
+  useEffect(() => {
+    // Reload the value when the key changes.
+    setStoredValue(readStoredValue(key, initialValueRef.current));
+  }, [key]);
+
   return [storedValue, setValue, removeValue];
 }
-`,useSessionStorage_test: `import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it } from "vitest";
+
+function readStoredValue<T>(key: string, initialValue: T): T {
+  try {
+    const item = window.sessionStorage.getItem(key);
+    return item === null ? initialValue : (JSON.parse(item) as T);
+  } catch (error) {
+    console.warn(\`Error reading sessionStorage key "\${key}":\`, error);
+    return initialValue;
+  }
+}
+`,
+  useSessionStorage_test: `import { act, renderHook } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useSessionStorage } from "./useSessionStorage.js";
 
@@ -3700,6 +4443,61 @@ describe("useSessionStorage", () => {
 
     expect(result.current[0]).toBe("initial");
     expect(sessionStorage.getItem("test")).toBeNull();
+  });
+
+  it("should use the latest fallback for a changed key", () => {
+    const { rerender, result } = renderHook(
+      ({ initialValue, key }) => useSessionStorage(key, initialValue),
+      { initialProps: { initialValue: "first-default", key: "firstKey" } },
+    );
+
+    rerender({ initialValue: "second-default", key: "secondKey" });
+    expect(result.current[0]).toBe("second-default");
+  });
+
+  it("should return the fallback when sessionStorage access throws", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(
+      window,
+      "sessionStorage",
+    );
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(vi.fn());
+    Object.defineProperty(window, "sessionStorage", {
+      configurable: true,
+      get: () => {
+        throw new DOMException("Blocked", "SecurityError");
+      },
+    });
+
+    try {
+      const { rerender, result } = renderHook(
+        ({ key }) => useSessionStorage(key, "fallback"),
+        { initialProps: { key: "first" } },
+      );
+
+      expect(result.current[0]).toBe("fallback");
+      rerender({ key: "second" });
+      expect(result.current[0]).toBe("fallback");
+      expect(warnSpy).toHaveBeenCalled();
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, "sessionStorage", descriptor);
+      }
+      warnSpy.mockRestore();
+    }
+  });
+
+  it("should load the value for a changed key", () => {
+    sessionStorage.setItem("firstKey", JSON.stringify("first"));
+    sessionStorage.setItem("secondKey", JSON.stringify("second"));
+
+    const { rerender, result } = renderHook(
+      ({ key }) => useSessionStorage(key, "default"),
+      { initialProps: { key: "firstKey" } },
+    );
+
+    expect(result.current[0]).toBe("first");
+    rerender({ key: "secondKey" });
+    expect(result.current[0]).toBe("second");
   });
 
   it("should handle complex objects", () => {
@@ -3772,7 +4570,8 @@ export function useThrottle<T>(value: T, interval = 500): T {
 
   return throttledValue;
 }
-`,useThrottle_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useThrottle_test: `import { act, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useThrottle } from "./useThrottle.js";
@@ -4001,7 +4800,8 @@ export function useThrottledCallback<T extends unknown[]>(
 
   return [throttledCallback, cancel];
 }
-`,useThrottledCallback_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useThrottledCallback_test: `import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useThrottledCallback } from "./useThrottledCallback.js";
@@ -4268,7 +5068,7 @@ describe("useThrottledCallback", () => {
 });
 `,
 
-  useTimeout: `import { useEffect } from "react";
+  useTimeout: `import { useEffect, useRef } from "react";
 
 /**
  * Calls a callback after a timeout.
@@ -4288,16 +5088,25 @@ describe("useThrottledCallback", () => {
  * }, null);
  */
 export function useTimeout(callback: () => void, delay: null | number): void {
+  const callbackRef = useRef(callback);
+
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, [callback]);
+
   useEffect(() => {
     if (delay === null) return;
 
-    const timeout = setTimeout(callback, delay);
+    const timeout = setTimeout(() => {
+      callbackRef.current();
+    }, delay);
     return () => {
       clearTimeout(timeout);
     };
-  }, [callback, delay]);
+  }, [delay]);
 }
-`,useTimeout_test: `import { renderHook } from "@testing-library/react";
+`,
+  useTimeout_test: `import { renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useTimeout } from "./useTimeout.js";
@@ -4321,6 +5130,24 @@ describe("useTimeout", () => {
 
     vi.advanceTimersByTime(2000);
     expect(callback).toHaveBeenCalledTimes(1);
+  });
+
+  it("should not reset the timeout when the callback changes", () => {
+    const firstCallback = vi.fn();
+    const secondCallback = vi.fn();
+    const { rerender } = renderHook(
+      ({ callback }: { callback: () => void }) => {
+        useTimeout(callback, 2000);
+      },
+      { initialProps: { callback: firstCallback } },
+    );
+
+    vi.advanceTimersByTime(1000);
+    rerender({ callback: secondCallback });
+    vi.advanceTimersByTime(1000);
+
+    expect(firstCallback).not.toHaveBeenCalled();
+    expect(secondCallback).toHaveBeenCalledTimes(1);
   });
 
   it("should cleanup timeout on unmount", () => {
@@ -4399,7 +5226,8 @@ export function useToggle(
 
   return [value, toggle, setValue];
 }
-`,useToggle_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useToggle_test: `import { act, renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
 import { useToggle } from "./useToggle.js";
@@ -4471,7 +5299,8 @@ export function useUnmount(callback: () => void): void {
     };
   }, []);
 }
-`,useUnmount_test: `import { renderHook } from "@testing-library/react";
+`,
+  useUnmount_test: `import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { useUnmount } from "./useUnmount.js";
@@ -4565,7 +5394,8 @@ export function useWindowSize(): WindowSize {
 
   return windowSize;
 }
-`,useWindowSize_test: `import { act, renderHook } from "@testing-library/react";
+`,
+  useWindowSize_test: `import { act, renderHook } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useWindowSize } from "./useWindowSize.js";

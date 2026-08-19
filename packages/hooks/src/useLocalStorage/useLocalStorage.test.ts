@@ -166,6 +166,51 @@ describe("useLocalStorage", () => {
     expect(result.current[0]).toBe("defaultValue");
   });
 
+  it("should use the latest fallback for a changed key and storage deletion", () => {
+    const { rerender, result } = renderHook(
+      ({ initialValue, key }) => useLocalStorage(key, initialValue),
+      { initialProps: { initialValue: "first-default", key: "firstKey" } },
+    );
+
+    rerender({ initialValue: "second-default", key: "secondKey" });
+    expect(result.current[0]).toBe("second-default");
+
+    act(() => {
+      window.dispatchEvent(
+        new StorageEvent("storage", { key: "secondKey", newValue: null }),
+      );
+    });
+    expect(result.current[0]).toBe("second-default");
+  });
+
+  it("should return the fallback when localStorage access throws", () => {
+    const descriptor = Object.getOwnPropertyDescriptor(window, "localStorage");
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(vi.fn());
+    Object.defineProperty(window, "localStorage", {
+      configurable: true,
+      get: () => {
+        throw new DOMException("Blocked", "SecurityError");
+      },
+    });
+
+    try {
+      const { rerender, result } = renderHook(
+        ({ key }) => useLocalStorage(key, "fallback"),
+        { initialProps: { key: "first" } },
+      );
+
+      expect(result.current[0]).toBe("fallback");
+      rerender({ key: "second" });
+      expect(result.current[0]).toBe("fallback");
+      expect(warnSpy).toHaveBeenCalled();
+    } finally {
+      if (descriptor) {
+        Object.defineProperty(window, "localStorage", descriptor);
+      }
+      warnSpy.mockRestore();
+    }
+  });
+
   it("should load the value for a changed key", () => {
     localStorage.setItem("firstKey", JSON.stringify("first"));
     localStorage.setItem("secondKey", JSON.stringify("second"));

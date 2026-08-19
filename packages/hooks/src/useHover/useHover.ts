@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 /**
  * Tracks mouse hover state on a DOM element via ref.
@@ -23,7 +23,7 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
   boolean,
   React.RefObject<T>,
 ] {
-  const ref = useRef<T>(null);
+  const elementRef = useRef<null | T>(null);
   const [isHovered, setIsHovered] = useState(false);
 
   const handleMouseEnter = useCallback(() => {
@@ -34,34 +34,40 @@ export function useHover<T extends HTMLElement = HTMLElement>(): [
     setIsHovered(false);
   }, []);
 
-  // Attach event listeners to the ref
   const setRef = useCallback(
     (element: null | T) => {
-      if (ref.current) {
-        ref.current.removeEventListener("mouseenter", handleMouseEnter);
-        ref.current.removeEventListener("mouseleave", handleMouseLeave);
+      if (elementRef.current === element) {
+        return;
       }
+
+      if (elementRef.current) {
+        elementRef.current.removeEventListener("mouseenter", handleMouseEnter);
+        elementRef.current.removeEventListener("mouseleave", handleMouseLeave);
+      }
+
+      elementRef.current = element;
+      setIsHovered(false);
 
       if (element) {
         element.addEventListener("mouseenter", handleMouseEnter);
         element.addEventListener("mouseleave", handleMouseLeave);
       }
-
-      ref.current = element;
     },
     [handleMouseEnter, handleMouseLeave],
   );
 
-  // Return a proxy ref that updates the internal ref
-  return [
-    isHovered,
-    {
-      get current() {
-        return ref.current;
-      },
-      set current(element: null | T) {
-        setRef(element);
-      },
-    } as React.RefObject<T>,
-  ];
+  const ref = useMemo(
+    () =>
+      ({
+        get current() {
+          return elementRef.current;
+        },
+        set current(element: null | T) {
+          setRef(element);
+        },
+      }) as React.RefObject<T>,
+    [setRef],
+  );
+
+  return [isHovered, ref];
 }

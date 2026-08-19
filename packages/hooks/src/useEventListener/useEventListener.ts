@@ -1,5 +1,10 @@
 import { useEffect, useRef } from "react";
 
+type EventListenerTarget = Pick<
+  EventTarget,
+  "addEventListener" | "removeEventListener"
+>;
+
 /**
  * Attaches an event listener to a target element or window with automatic cleanup.
  *
@@ -69,19 +74,16 @@ export function useEventListener<
     eventListener: typeof handler;
     eventName: string;
     options: AddEventListenerOptions | boolean | undefined;
-    target: Document | Element | Window;
+    target: EventListenerTarget;
   }>(null);
 
   useEffect(() => {
-    let targetElement: Document | Element | null | Window;
-
-    if (element === undefined) {
-      targetElement = window;
-    } else if (element instanceof Document || element instanceof Window) {
-      targetElement = element;
-    } else {
-      targetElement = element.current;
-    }
+    const targetElement =
+      element === undefined
+        ? window
+        : isEventListenerTarget(element)
+          ? element
+          : element.current;
 
     const currentListener = listenerRef.current;
     if (
@@ -98,7 +100,7 @@ export function useEventListener<
       listenerRef.current = null;
     }
 
-    if (targetElement !== null && listenerRef.current === null) {
+    if (isEventListenerTarget(targetElement) && listenerRef.current === null) {
       const eventListener: typeof handler = (event) => {
         savedHandler.current(event);
       };
@@ -126,4 +128,15 @@ export function useEventListener<
       }
     };
   }, []);
+}
+
+function isEventListenerTarget(value: unknown): value is EventListenerTarget {
+  return (
+    value !== null &&
+    typeof value === "object" &&
+    "addEventListener" in value &&
+    typeof value.addEventListener === "function" &&
+    "removeEventListener" in value &&
+    typeof value.removeEventListener === "function"
+  );
 }

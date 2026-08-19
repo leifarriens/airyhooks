@@ -198,6 +198,63 @@ describe("useFetch", () => {
     expect(result.current.isLoading).toBe(false);
   });
 
+  it("should clear loading when an immediate fetch is disabled", async () => {
+    let rejectRequest: ((reason?: unknown) => void) | undefined;
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectRequest = reject;
+        }),
+    );
+
+    const { rerender, result } = renderHook(
+      ({ immediate }) => useFetch<typeof mockData>("/api/test", { immediate }),
+      { initialProps: { immediate: true } },
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ immediate: false });
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      rejectRequest?.(new DOMException("Aborted", "AbortError"));
+      await Promise.resolve();
+    });
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it("should clear loading when URL changes and immediate fetch is disabled", async () => {
+    let rejectRequest: ((reason?: unknown) => void) | undefined;
+    vi.spyOn(global, "fetch").mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectRequest = reject;
+        }),
+    );
+
+    const { rerender, result } = renderHook(
+      ({ immediate, url }) => useFetch<typeof mockData>(url, { immediate }),
+      { initialProps: { immediate: true, url: "/api/first" } },
+    );
+
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
+
+    rerender({ immediate: false, url: "/api/second" });
+    expect(result.current.isLoading).toBe(false);
+
+    await act(async () => {
+      rejectRequest?.(new DOMException("Aborted", "AbortError"));
+      await Promise.resolve();
+    });
+    expect(result.current.isLoading).toBe(false);
+    expect(global.fetch).toHaveBeenCalledTimes(1);
+  });
+
   it("should clear error on successful refetch", async () => {
     vi.spyOn(global, "fetch").mockImplementationOnce(() =>
       Promise.resolve({
