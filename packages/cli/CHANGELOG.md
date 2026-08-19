@@ -1,5 +1,11 @@
 # airyhooks
 
+## 0.5.2
+
+### Patch Changes
+
+- 779cc0f: Fix generated hook template drift and lifecycle edge cases across fetch, storage, DOM observer, hover, keyboard,
+
 ## 0.5.1
 
 ### Patch Changes
