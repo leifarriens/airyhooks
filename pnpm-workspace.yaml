@@ -5,9 +5,15 @@ packages:
   - "!**/test/**"
 
 minimumReleaseAge: 10080
-trustPolicy: no-downgrade
 blockExoticSubdeps: true
 strictDepBuilds: true
 
 onlyBuiltDependencies:
   - esbuild
+
+minimumReleaseAgeExclude:
+  - "@changesets/cli@3.0.1"
+  - "@changesets/write@1.0.1"
+
+allowBuilds:
+  esbuild: true

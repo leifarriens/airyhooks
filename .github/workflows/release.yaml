@@ -33,9 +33,9 @@ jobs:
         uses: rharkor/caching-for-turbo@v1.8
 
       - name: 🧾 Create release PR or publish
-        uses: changesets/action@v1
+        uses: changesets/action@v2
         with:
-          publish: pnpm release
-          createGithubReleases: true
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          publish-script: pnpm release
+          create-github-releases: true
+          push-with-git-cli: true
