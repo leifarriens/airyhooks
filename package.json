@@ -23,7 +23,7 @@
     "@manypkg/cli": "^0.25.1",
     "@types/node": "^24.12.2",
     "prettier": "^3.9.6",
-    "turbo": "^2.10.9"
+    "turbo": "^2.10.11"
   },
   "packageManager": "pnpm@11.22.0"
 }
