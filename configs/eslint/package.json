@@ -13,14 +13,14 @@
   },
   "dependencies": {
     "@eslint/compat": "^2.1.1",
-    "eslint-config-turbo": "^2.10.12",
-    "eslint-plugin-perfectionist": "^5.11.0",
-    "typescript-eslint": "^8.70.0"
+    "eslint-config-turbo": "^2.11.5",
+    "eslint-plugin-perfectionist": "^5.12.1",
+    "typescript-eslint": "^8.71.0"
   },
   "devDependencies": {
     "@airyhooks/tsconfig": "workspace:*",
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.10.0",
+    "eslint": "^10.11.0",
     "typescript": "^6.0.3"
   }
 }
