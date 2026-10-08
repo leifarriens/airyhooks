@@ -41,7 +41,7 @@ When fixing a specific issue (e.g., a lint error or a single failing test), use 
 
 3. **Once the targeted check passes**, run the full verification loop:
    ```bash
-   pnpm format && pnpm lint && pnpm typecheck && pnpm test
+   pnpm turbo typecheck lint test
    ```
 
 This avoids running all checks repeatedly while iterating on a fix. Turbo caches unchanged packages, so the full verification is fast after targeted work.
@@ -59,31 +59,13 @@ This monorepo uses **pnpm**. Always use `pnpm` commands.
 Run commands from the repository root to verify all packages. Non-changed packages are cached with turbo for faster execution:
 
 ```bash
-pnpm format
-pnpm typecheck
-pnpm lint
-pnpm test
+pnpm turbo typecheck lint test
 ```
 
 ### Specific Package
 
-To run commands for a specific package, use the `--filter` flag:
+To run a command for a specific package, use the `--filter` flag:
 
 ```bash
-# For the hooks package
 pnpm turbo lint --filter=@airyhooks/hooks
-pnpm turbo test --filter=@airyhooks/hooks
-pnpm turbo typecheck --filter=@airyhooks/hooks
-
-# For the CLI package
-pnpm turbo lint --filter=airyhooks
-pnpm turbo test --filter=airyhooks
-pnpm turbo typecheck --filter=airyhooks
-```
-
-Or navigate to the package directory:
-
-```bash
-cd packages/hooks && pnpm test
-cd packages/cli && pnpm test
 ```

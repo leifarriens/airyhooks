@@ -39,17 +39,18 @@ describe("useMedia", () => {
 
   it("should update on media query change", async () => {
     let listenerFn: ((e: MediaQueryListEvent) => void) | null = null;
+    const mediaQueryList = {
+      addEventListener: vi.fn(
+        (_: string, fn: (e: MediaQueryListEvent) => void) => {
+          listenerFn = fn;
+        },
+      ),
+      matches: false,
+      removeEventListener: vi.fn(),
+    };
 
     Object.defineProperty(window, "matchMedia", {
-      value: vi.fn(() => ({
-        addEventListener: vi.fn(
-          (_: string, fn: (e: MediaQueryListEvent) => void) => {
-            listenerFn = fn;
-          },
-        ),
-        matches: false,
-        removeEventListener: vi.fn(),
-      })),
+      value: vi.fn(() => mediaQueryList),
       writable: true,
     });
 
@@ -58,6 +59,7 @@ describe("useMedia", () => {
 
     // Trigger the change listener
     expect(listenerFn).toBeDefined();
+    mediaQueryList.matches = true;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     listenerFn!({
       matches: true,
@@ -75,13 +77,14 @@ describe("useMedia", () => {
       listenerFn = fn;
     });
     const removeListener = vi.fn();
+    const mediaQueryList = {
+      addListener,
+      matches: false,
+      removeListener,
+    };
 
     Object.defineProperty(window, "matchMedia", {
-      value: vi.fn(() => ({
-        addListener,
-        matches: false,
-        removeListener,
-      })),
+      value: vi.fn(() => mediaQueryList),
       writable: true,
     });
 
@@ -91,6 +94,7 @@ describe("useMedia", () => {
     const legacyListener = listenerFn as unknown as (
       event: MediaQueryListEvent,
     ) => void;
+    mediaQueryList.matches = true;
     legacyListener({ matches: true } as MediaQueryListEvent);
     await waitFor(() => {
       expect(result.current).toBe(true);
@@ -135,23 +139,25 @@ describe("useMedia", () => {
     expect(typeof result.current).toBe("boolean");
   });
 
-  it("should update when query changes", () => {
+  it("should immediately reflect the result for a changed query", () => {
     Object.defineProperty(window, "matchMedia", {
-      value: vi.fn(() => ({
+      value: vi.fn((query: string) => ({
         addEventListener: vi.fn(),
-        matches: false,
+        matches: query === "matching",
         removeEventListener: vi.fn(),
       })),
       writable: true,
     });
 
     const { rerender, result } = renderHook(({ query }) => useMedia(query), {
-      initialProps: { query: "(max-width: 768px)" },
+      initialProps: { query: "matching" },
     });
 
-    rerender({ query: "(max-width: 480px)" });
+    expect(result.current).toBe(true);
 
-    expect(typeof result.current).toBe("boolean");
+    rerender({ query: "not matching" });
+
+    expect(result.current).toBe(false);
   });
 
   it("should clean up listeners on unmount", () => {

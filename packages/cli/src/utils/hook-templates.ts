@@ -1002,6 +1002,18 @@ describe("useDebouncedCallback", () => {
 
   useDocumentTitle: `import { useEffect, useRef } from "react";
 
+interface DocumentTitleEntry {
+  restoreOnUnmount: boolean;
+  title: string;
+}
+
+interface DocumentTitleState {
+  entries: DocumentTitleEntry[];
+  previousTitle: string;
+}
+
+const documentTitleStates = new WeakMap<Document, DocumentTitleState>();
+
 /**
  * Dynamically update the document title.
  *
@@ -1021,28 +1033,59 @@ describe("useDebouncedCallback", () => {
  * useDocumentTitle('Dashboard', false);
  */
 export function useDocumentTitle(title: string, restoreOnUnmount = true): void {
-  const previousTitle = useRef<string | undefined>(undefined);
-  const restoreOnUnmountRef = useRef(restoreOnUnmount);
-
-  useEffect(() => {
-    restoreOnUnmountRef.current = restoreOnUnmount;
-  }, [restoreOnUnmount]);
+  const entryRef = useRef<DocumentTitleEntry | null>(null);
 
   useEffect(() => {
     if (typeof document === "undefined") {
       return;
     }
 
-    // Store the previous title only on first mount
-    previousTitle.current ??= document.title;
+    let state = documentTitleStates.get(document);
+    if (!state) {
+      state = { entries: [], previousTitle: document.title };
+      documentTitleStates.set(document, state);
+    }
 
+    const entry = entryRef.current ?? { restoreOnUnmount, title };
+    entry.title = title;
+    entry.restoreOnUnmount = restoreOnUnmount;
+    entryRef.current = entry;
+
+    const currentIndex = state.entries.indexOf(entry);
+    if (currentIndex !== -1) {
+      state.entries.splice(currentIndex, 1);
+    }
+    state.entries.push(entry);
     document.title = title;
-  }, [title]);
+  }, [title, restoreOnUnmount]);
 
   useEffect(() => {
     return () => {
-      if (restoreOnUnmountRef.current && previousTitle.current !== undefined) {
-        document.title = previousTitle.current;
+      if (typeof document === "undefined") {
+        return;
+      }
+
+      const entry = entryRef.current;
+      const state = documentTitleStates.get(document);
+      if (!entry || !state) {
+        return;
+      }
+
+      const index = state.entries.indexOf(entry);
+      if (index === -1) {
+        return;
+      }
+
+      if (!entry.restoreOnUnmount) {
+        state.previousTitle = entry.title;
+      }
+      state.entries.splice(index, 1);
+
+      const activeEntry = state.entries.at(-1);
+      document.title = activeEntry?.title ?? state.previousTitle;
+
+      if (state.entries.length === 0) {
+        documentTitleStates.delete(document);
       }
     };
   }, []);
@@ -1098,6 +1141,38 @@ describe("useDocumentTitle", () => {
 
     unmount();
     expect(document.title).toBe(originalTitle);
+  });
+
+  it("should preserve the active title when another title owner unmounts", () => {
+    const first = renderHook(() => {
+      useDocumentTitle("First Title");
+    });
+    const second = renderHook(() => {
+      useDocumentTitle("Second Title");
+    });
+
+    expect(document.title).toBe("Second Title");
+
+    first.unmount();
+    expect(document.title).toBe("Second Title");
+
+    second.unmount();
+    expect(document.title).toBe(originalTitle);
+  });
+
+  it("should keep a non-restoring title as the fallback for other owners", () => {
+    const permanent = renderHook(() => {
+      useDocumentTitle("Permanent Title", false);
+    });
+    const temporary = renderHook(() => {
+      useDocumentTitle("Temporary Title");
+    });
+
+    temporary.unmount();
+    expect(document.title).toBe("Permanent Title");
+
+    permanent.unmount();
+    expect(document.title).toBe("Permanent Title");
   });
 
   it("should not restore title on unmount when restoreOnUnmount is false", () => {
@@ -3783,7 +3858,7 @@ describe("useMeasure", () => {
 });
 `,
 
-  useMedia: `import { useEffect, useState } from "react";
+  useMedia: `import { useCallback, useSyncExternalStore } from "react";
 
 /**
  * Reacts to CSS media query changes.
@@ -3803,24 +3878,15 @@ describe("useMeasure", () => {
  * );
  */
 export function useMedia(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const mediaQueryList = getMediaQueryList(query, true);
+      if (!mediaQueryList) {
+        return () => undefined;
+      }
 
-  useEffect(() => {
-    // Check if window is defined (SSR safety)
-    if (typeof window === "undefined") {
-      return undefined;
-    }
-
-    try {
-      const mediaQueryList = window.matchMedia(query);
-
-      // Set initial value
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMatches(mediaQueryList.matches);
-
-      // Create listener function
-      const handleChange = (e: MediaQueryListEvent) => {
-        setMatches(e.matches);
+      const handleChange = () => {
+        onStoreChange();
       };
 
       if (typeof mediaQueryList.addEventListener === "function") {
@@ -3837,13 +3903,34 @@ export function useMedia(query: string): boolean {
         // eslint-disable-next-line @typescript-eslint/no-deprecated
         mediaQueryList.removeListener(handleChange);
       };
-    } catch (error) {
-      console.warn(\`Invalid media query: "\${query}"\`, error);
-      return undefined;
-    }
-  }, [query]);
+    },
+    [query],
+  );
 
-  return matches;
+  const getSnapshot = useCallback(
+    () => getMediaQueryList(query)?.matches ?? false,
+    [query],
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
+}
+
+function getMediaQueryList(
+  query: string,
+  warnOnError = false,
+): MediaQueryList | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.matchMedia(query);
+  } catch (error) {
+    if (warnOnError) {
+      console.warn(\`Invalid media query: "\${query}"\`, error);
+    }
+    return null;
+  }
 }
 `,
   useMedia_test: `import { renderHook, waitFor } from "@testing-library/react";
@@ -3887,17 +3974,18 @@ describe("useMedia", () => {
 
   it("should update on media query change", async () => {
     let listenerFn: ((e: MediaQueryListEvent) => void) | null = null;
+    const mediaQueryList = {
+      addEventListener: vi.fn(
+        (_: string, fn: (e: MediaQueryListEvent) => void) => {
+          listenerFn = fn;
+        },
+      ),
+      matches: false,
+      removeEventListener: vi.fn(),
+    };
 
     Object.defineProperty(window, "matchMedia", {
-      value: vi.fn(() => ({
-        addEventListener: vi.fn(
-          (_: string, fn: (e: MediaQueryListEvent) => void) => {
-            listenerFn = fn;
-          },
-        ),
-        matches: false,
-        removeEventListener: vi.fn(),
-      })),
+      value: vi.fn(() => mediaQueryList),
       writable: true,
     });
 
@@ -3906,6 +3994,7 @@ describe("useMedia", () => {
 
     // Trigger the change listener
     expect(listenerFn).toBeDefined();
+    mediaQueryList.matches = true;
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     listenerFn!({
       matches: true,
@@ -3923,13 +4012,14 @@ describe("useMedia", () => {
       listenerFn = fn;
     });
     const removeListener = vi.fn();
+    const mediaQueryList = {
+      addListener,
+      matches: false,
+      removeListener,
+    };
 
     Object.defineProperty(window, "matchMedia", {
-      value: vi.fn(() => ({
-        addListener,
-        matches: false,
-        removeListener,
-      })),
+      value: vi.fn(() => mediaQueryList),
       writable: true,
     });
 
@@ -3939,6 +4029,7 @@ describe("useMedia", () => {
     const legacyListener = listenerFn as unknown as (
       event: MediaQueryListEvent,
     ) => void;
+    mediaQueryList.matches = true;
     legacyListener({ matches: true } as MediaQueryListEvent);
     await waitFor(() => {
       expect(result.current).toBe(true);
@@ -3983,23 +4074,25 @@ describe("useMedia", () => {
     expect(typeof result.current).toBe("boolean");
   });
 
-  it("should update when query changes", () => {
+  it("should immediately reflect the result for a changed query", () => {
     Object.defineProperty(window, "matchMedia", {
-      value: vi.fn(() => ({
+      value: vi.fn((query: string) => ({
         addEventListener: vi.fn(),
-        matches: false,
+        matches: query === "matching",
         removeEventListener: vi.fn(),
       })),
       writable: true,
     });
 
     const { rerender, result } = renderHook(({ query }) => useMedia(query), {
-      initialProps: { query: "(max-width: 768px)" },
+      initialProps: { query: "matching" },
     });
 
-    rerender({ query: "(max-width: 480px)" });
+    expect(result.current).toBe(true);
 
-    expect(typeof result.current).toBe("boolean");
+    rerender({ query: "not matching" });
+
+    expect(result.current).toBe(false);
   });
 
   it("should clean up listeners on unmount", () => {

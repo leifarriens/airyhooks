@@ -50,6 +50,38 @@ describe("useDocumentTitle", () => {
     expect(document.title).toBe(originalTitle);
   });
 
+  it("should preserve the active title when another title owner unmounts", () => {
+    const first = renderHook(() => {
+      useDocumentTitle("First Title");
+    });
+    const second = renderHook(() => {
+      useDocumentTitle("Second Title");
+    });
+
+    expect(document.title).toBe("Second Title");
+
+    first.unmount();
+    expect(document.title).toBe("Second Title");
+
+    second.unmount();
+    expect(document.title).toBe(originalTitle);
+  });
+
+  it("should keep a non-restoring title as the fallback for other owners", () => {
+    const permanent = renderHook(() => {
+      useDocumentTitle("Permanent Title", false);
+    });
+    const temporary = renderHook(() => {
+      useDocumentTitle("Temporary Title");
+    });
+
+    temporary.unmount();
+    expect(document.title).toBe("Permanent Title");
+
+    permanent.unmount();
+    expect(document.title).toBe("Permanent Title");
+  });
+
   it("should not restore title on unmount when restoreOnUnmount is false", () => {
     const { unmount } = renderHook(() => {
       useDocumentTitle("Permanent Title", false);

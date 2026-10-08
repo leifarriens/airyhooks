@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 /**
  * Reacts to CSS media query changes.
@@ -18,24 +18,15 @@ import { useEffect, useState } from "react";
  * );
  */
 export function useMedia(query: string): boolean {
-  const [matches, setMatches] = useState(false);
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const mediaQueryList = getMediaQueryList(query, true);
+      if (!mediaQueryList) {
+        return () => undefined;
+      }
 
-  useEffect(() => {
-    // Check if window is defined (SSR safety)
-    if (typeof window === "undefined") {
-      return undefined;
-    }
-
-    try {
-      const mediaQueryList = window.matchMedia(query);
-
-      // Set initial value
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMatches(mediaQueryList.matches);
-
-      // Create listener function
-      const handleChange = (e: MediaQueryListEvent) => {
-        setMatches(e.matches);
+      const handleChange = () => {
+        onStoreChange();
       };
 
       if (typeof mediaQueryList.addEventListener === "function") {
@@ -52,11 +43,32 @@ export function useMedia(query: string): boolean {
         // eslint-disable-next-line @typescript-eslint/no-deprecated
         mediaQueryList.removeListener(handleChange);
       };
-    } catch (error) {
-      console.warn(`Invalid media query: "${query}"`, error);
-      return undefined;
-    }
-  }, [query]);
+    },
+    [query],
+  );
 
-  return matches;
+  const getSnapshot = useCallback(
+    () => getMediaQueryList(query)?.matches ?? false,
+    [query],
+  );
+
+  return useSyncExternalStore(subscribe, getSnapshot, () => false);
+}
+
+function getMediaQueryList(
+  query: string,
+  warnOnError = false,
+): MediaQueryList | null {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    return window.matchMedia(query);
+  } catch (error) {
+    if (warnOnError) {
+      console.warn(`Invalid media query: "${query}"`, error);
+    }
+    return null;
+  }
 }
